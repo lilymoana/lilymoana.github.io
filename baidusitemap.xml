@@ -48,16 +48,16 @@
 
     
   <url>
-    <loc>https://lilymoana.github.io/ConsensusCompare.html</loc>
+    <loc>https://lilymoana.github.io/DPOS.html</loc>
     <lastmod>2017-11-22T05:25:28.822Z</lastmod>
     <data>
         <display>
-        <title>共识算法的比较：Casper vs Tendermint</title>
-        <pubTime>2017-11-18T11:18:05.000Z</pubTime>
+        <title>DPOS共识算法—缺失的白皮书</title>
+        <pubTime>2017-09-25T10:52:12.000Z</pubTime>
         
         <tag>blockchain</tag>
          
-        <tag>Consensus</tag>
+        <tag>consensus</tag>
          
          
            
@@ -158,16 +158,16 @@
 
     
   <url>
-    <loc>https://lilymoana.github.io/DPOS.html</loc>
+    <loc>https://lilymoana.github.io/ConsensusCompare.html</loc>
     <lastmod>2017-11-22T05:25:28.822Z</lastmod>
     <data>
         <display>
-        <title>DPOS共识算法—缺失的白皮书</title>
-        <pubTime>2017-09-25T10:52:12.000Z</pubTime>
+        <title>共识算法的比较：Casper vs Tendermint</title>
+        <pubTime>2017-11-18T11:18:05.000Z</pubTime>
         
         <tag>blockchain</tag>
          
-        <tag>consensus</tag>
+        <tag>Consensus</tag>
          
          
            

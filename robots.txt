@@ -1,0 +1,11 @@
+# hexo robots.txt
+User-agent: *
+
+Disallow: /libs/
+Disallow: /js/
+Disallow: /css/
+Disallow: /fonts/
+Disallow: /fancybox/
+
+Sitemap: http://lilymoana.github.io/sitemap.xml
+Sitemap: http://lilymoana.github.io/baidusitemap.xml

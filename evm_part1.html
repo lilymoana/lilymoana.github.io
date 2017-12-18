@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>深入了解以太坊虚拟机 | Lily&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="深入了解以太坊虚拟机是一个系列的文章，一共5篇！ 本文是第1篇，主要介绍的是以太坊虚拟机汇编代码基础。后续的4篇译文链接在本文的结尾处。">
+<meta name="keywords" content="blockchain,ethereum">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入了解以太坊虚拟机">
+<meta property="og:url" content="https://lilymoana.github.io/evm_part1.html">
+<meta property="og:site_name" content="Lily&#39;s Blog">
+<meta property="og:description" content="深入了解以太坊虚拟机是一个系列的文章，一共5篇！ 本文是第1篇，主要介绍的是以太坊虚拟机汇编代码基础。后续的4篇译文链接在本文的结尾处。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8388873-16fc12cd8a9b1992.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2017-11-22T05:25:28.822Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入了解以太坊虚拟机">
+<meta name="twitter:description" content="深入了解以太坊虚拟机是一个系列的文章，一共5篇！ 本文是第1篇，主要介绍的是以太坊虚拟机汇编代码基础。后续的4篇译文链接在本文的结尾处。">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/8388873-16fc12cd8a9b1992.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternative" href="/atom.xml" title="Lily&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.jpg" class="js-avatar" src="/img/avatar.jpg">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">XU LI</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">Winter is coming !</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder=" Search...">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Links</li>
+                        
+                        
+                        <li>Motto</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">分类阅读</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                            
+                                <a class="fl twitter"  target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                            
+                                <a class="fl wechat"  target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Consensus/" style="font-size: 10px;">Consensus</a> <a href="/tags/bitcoin/" style="font-size: 10px;">bitcoin</a> <a href="/tags/blockchain/" style="font-size: 20px;">blockchain</a> <a href="/tags/c/" style="font-size: 13.33px;">c</a> <a href="/tags/consensus/" style="font-size: 10px;">consensus</a> <a href="/tags/ethereum/" style="font-size: 16.67px;">ethereum</a>
+                    </div>
+                </section>
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="https://gguoss.github.io/">blog</a>
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="http://www.jianshu.com/u/efa3e72bbb80">简书</a>
+                    
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-motto">The meaning of life is to give life a meaning !</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">XU LI</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.jpg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">XU LI</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">Winter is coming !</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">分类阅读</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                    
+                        <a class="twitter" target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                    
+                        <a class="wechat" target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-evm_part1" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/evm_part1.html" class="article-date">
+      <time datetime="2017-10-30T08:48:52.000Z" itemprop="datePublished">2017-10-30</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深入了解以太坊虚拟机
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/translation/">translation</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/blockchain/">blockchain</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ethereum/">ethereum</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p><strong> </strong>  <Excerpt in index | Homepage Digest></p>
+<p>深入了解以太坊虚拟机是一个系列的文章，一共5篇！ 本文是第1篇，主要介绍的是以太坊虚拟机汇编代码基础。后续的4篇译文链接在本文的结尾处。</p>
+<a id="more"></a>
+<The rest of contents | Rest of all>
+
+<p><img src="http://upload-images.jianshu.io/upload_images/8388873-16fc12cd8a9b1992.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>Solidity提供了很多高级语言的抽象概念，但是这些特性让人很难明白在运行程序的时候到底发生了什么。我阅读了Solidity的文档，但依旧存在着几个基本的问题没有弄明白。</p>
+<p><em>string, bytes32, byte[], bytes之间的区别是什么？</em></p>
+<ul>
+<li>该在什么地方使用哪个类型？</li>
+<li>将 string 转换成bytes时会怎么样？可以转换成byte[]吗？</li>
+<li>它们的存储成本是多少？</li>
+</ul>
+<p><em>EVM是如何存储映射( mappings)的？</em></p>
+<ul>
+<li>为什么不能删除一个映射？</li>
+<li>可以有映射的映射吗？(可以，但是怎样映射？)</li>
+<li>为什么存在存储映射，但是却没有内存映射？</li>
+</ul>
+<p><em>编译的合约在EVM看来是什么样子的？</em></p>
+<ul>
+<li>合约是如何创建的？</li>
+<li>到底什么是构造器？</li>
+<li>什么是 fallback 函数？</li>
+</ul>
+<p>我觉得学习在以太坊虚拟机(EVM)上运行的类似Solidity 高级语言是一种很好的投资，有几个原因：</p>
+<ol>
+<li><em>Solidity不是最后一种语言</em>。更好的EVM语言正在到来。（拜托？）</li>
+<li><em>EVM是一个数据库引擎</em>。要理解智能合约是如何以任意EVM语言来工作的，就必须要明白数据是如何被组织的，被存储的，以及如何被操作的。</li>
+<li><em>知道如何成为贡献者。</em>以太坊的工具链还处于早期，理解EVM可以帮助你实现一个超棒的工具给自己和其他人使用。</li>
+<li><em>智力的挑战。</em>EVM可以让你有个很好的理由在密码学、数据结构、编程语言设计的交集之间进行翱翔。</li>
+</ol>
+<p>在这个系列的文章中，我会拆开一个简单的Solidity合约，来让大家明白它是如何以EVM字节码(bytecode)来运行的。</p>
+<p>我希望能够学习以及会书写的文章大纲：</p>
+<ul>
+<li>EVM字节码的基础认识</li>
+<li>不同类型(映射，数组)是如何表示的</li>
+<li>当一个新合约创建之后会发生什么</li>
+<li>当一个方法被调用时会发生什么</li>
+<li>ABI如何桥接不同的EVM语言</li>
+</ul>
+<p>我的最终目标是整体的理解一个编译的Solidity合约。让我们从阅读一些基本的EVM字节码开始。</p>
+<p><a href="https://gist.github.com/hayeah/bd37a123c02fecffbe629bf98a8391df">EVM指令集</a>将是一个比较有帮助的参考。</p>
+<h2 id="一个简单的合约"><a href="#一个简单的合约" class="headerlink" title="一个简单的合约"></a>一个简单的合约</h2><p>我们的第一个合约有一个构造器和一个状态变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// c1.sol</span><br><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">    uint256 a;</span><br><span class="line">    function C() &#123;</span><br><span class="line">      a = 1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>用<code>solc</code>来编译此合约：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">$ solc --bin --asm c1.sol</span><br><span class="line">======= c1.sol:C =======</span><br><span class="line">EVM assembly:</span><br><span class="line">    /* &quot;c1.sol&quot;:26:94  contract C &#123;... */</span><br><span class="line">  mstore(0x40, 0x60)</span><br><span class="line">    /* &quot;c1.sol&quot;:59:92  function C() &#123;... */</span><br><span class="line">  jumpi(tag_1, iszero(callvalue))</span><br><span class="line">  0x0</span><br><span class="line">  dup1</span><br><span class="line">  revert</span><br><span class="line">tag_1:</span><br><span class="line">tag_2:</span><br><span class="line">    /* &quot;c1.sol&quot;:84:85  1 */</span><br><span class="line">  0x1</span><br><span class="line">    /* &quot;c1.sol&quot;:80:81  a */</span><br><span class="line">  0x0</span><br><span class="line">    /* &quot;c1.sol&quot;:80:85  a = 1 */</span><br><span class="line">  dup2</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br><span class="line">  pop</span><br><span class="line">    /* &quot;c1.sol&quot;:59:92  function C() &#123;... */</span><br><span class="line">tag_3:</span><br><span class="line">    /* &quot;c1.sol&quot;:26:94  contract C &#123;... */</span><br><span class="line">tag_4:</span><br><span class="line">  dataSize(sub_0)</span><br><span class="line">  dup1</span><br><span class="line">  dataOffset(sub_0)</span><br><span class="line">  0x0</span><br><span class="line">  codecopy</span><br><span class="line">  0x0</span><br><span class="line">  return</span><br><span class="line">stop</span><br><span class="line">sub_0: assembly &#123;</span><br><span class="line">        /* &quot;c1.sol&quot;:26:94  contract C &#123;... */</span><br><span class="line">      mstore(0x40, 0x60)</span><br><span class="line">    tag_1:</span><br><span class="line">      0x0</span><br><span class="line">      dup1</span><br><span class="line">      revert</span><br><span class="line">auxdata: 0xa165627a7a72305820af3193f6fd31031a0e0d2de1ad2c27352b1ce081b4f3c92b5650ca4dd542bb770029</span><br><span class="line">&#125;</span><br><span class="line">Binary:</span><br><span class="line">60606040523415600e57600080fd5b5b60016000819055505b5b60368060266000396000f30060606040525b600080fd00a165627a7a72305820af3193f6fd31031a0e0d2de1ad2c27352b1ce081b4f3c92b5650ca4dd542bb770029</span><br></pre></td></tr></table></figure></p>
+<p><code>6060604052...</code>这串数字就是EVM实际运行的字节码。</p>
+<h2 id="一小步一小步的来"><a href="#一小步一小步的来" class="headerlink" title="一小步一小步的来"></a>一小步一小步的来</h2><p>上面一半的编译汇编是大多数Solidity程序中都会存在的样板语句。我们稍后再来看这些。现在，我们来看看合约中独特的部分，简单的存储变量赋值：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a = 1</span><br></pre></td></tr></table></figure></p>
+<p>代表这个赋值的字节码是<code>6001600081905550</code>。我们把它拆成一行一条指令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">60 01</span><br><span class="line">60 00</span><br><span class="line">81</span><br><span class="line">90</span><br><span class="line">55</span><br><span class="line">50</span><br></pre></td></tr></table></figure></p>
+<p>EVM本质上就是一个循环，从上到下的执行每一条命令。让我们用相应的字节码来注释汇编代码(缩进到标签<code>tag_2</code>下)，来更好的看看他们之间的关联：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">tag_2:</span><br><span class="line">  // 60 01</span><br><span class="line">  0x1</span><br><span class="line">  // 60 00</span><br><span class="line">  0x0</span><br><span class="line">  // 81</span><br><span class="line">  dup2</span><br><span class="line">  // 90</span><br><span class="line">  swap1</span><br><span class="line">  // 55</span><br><span class="line">  sstore</span><br><span class="line">  // 50</span><br><span class="line">  pop</span><br></pre></td></tr></table></figure></p>
+<p>注意<code>0x1</code>在汇编代码中实际上是<code>push(0x1)</code>的速记。这条指令将数值1压入栈中。</p>
+<p>只是盯着它依然很难明白到底发生了什么，不过不用担心，一行一行的模拟EVM是比较简单的。</p>
+<h2 id="模拟EVM"><a href="#模拟EVM" class="headerlink" title="模拟EVM"></a>模拟EVM</h2><p>EVM是个堆栈机器。指令可能会使用栈上的数值作为参数，也会将值作为结果压入栈中。让我们来思考一下<code>add</code>操作。</p>
+<p>假设栈上有两个值：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[1 2]</span><br></pre></td></tr></table></figure></p>
+<p>当EVM看见了<code>add</code>，它会将栈顶的2项相加，然后将答案压入栈中，结果是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[3]</span><br></pre></td></tr></table></figure></p>
+<p>接下来，我们用<code>[]</code>符号来标识栈：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 空栈</span><br><span class="line">stack: []</span><br><span class="line">// 有3个数据的栈，栈顶项为3，栈底项为1</span><br><span class="line">stack: [3 2 1]</span><br></pre></td></tr></table></figure></p>
+<p>用<code>{}</code>符号来标识合约存储器：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 空存储</span><br><span class="line">store: &#123;&#125;</span><br><span class="line">// 数值0x1被保存在0x0的位置上</span><br><span class="line">store: &#123; 0x0 =&gt; 0x1 &#125;</span><br></pre></td></tr></table></figure></p>
+<p>现在让我们来看看真正的字节码。我们将会像EVM那样来模拟<code>6001600081905550</code>字节序列，并打印出每条指令的机器状态：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">// 60 01:将1压入栈中</span><br><span class="line">0x1</span><br><span class="line">  stack: [0x1]</span><br><span class="line">// 60 00: 将0压入栈中</span><br><span class="line">0x0</span><br><span class="line">  stack: [0x0 0x1]</span><br><span class="line">// 81: 复制栈中的第二项</span><br><span class="line">dup2</span><br><span class="line">  stack: [0x1 0x0 0x1]</span><br><span class="line">// 90: 交换栈顶的两项数据</span><br><span class="line">swap1</span><br><span class="line">  stack: [0x0 0x1 0x1]</span><br><span class="line">// 55: 将数值0x01存储在0x0的位置上</span><br><span class="line">// 这个操作会消耗栈顶两项数据</span><br><span class="line">sstore</span><br><span class="line">  stack: [0x1]</span><br><span class="line">  store: &#123; 0x0 =&gt; 0x1 &#125;</span><br><span class="line">// 50: pop (丢弃栈顶数据)</span><br><span class="line">pop</span><br><span class="line">  stack: []</span><br><span class="line">  store: &#123; 0x0 =&gt; 0x1 &#125;</span><br></pre></td></tr></table></figure></p>
+<p>最后，栈就为空栈，而存储器里面有一项数据。</p>
+<p>值得注意的是Solidity已经决定将状态变量<code>uint256 a</code>保存在<code>0x0</code>的位置上。其他语言完全可以选择将状态变量存储在其他的任何位置上。</p>
+<p><code>6001600081905550</code>字节序列在本质上用EVM的操作伪代码来表示就是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// a = 1</span><br><span class="line">sstore(0x0, 0x1)</span><br></pre></td></tr></table></figure></p>
+<p>仔细观察，你就会发现<code>dup2</code>，<code>swap1</code>，<code>pop</code>都是多余的，汇编代码可以更简单一些：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0x1</span><br><span class="line">0x0</span><br><span class="line">sstore</span><br></pre></td></tr></table></figure></p>
+<p>你可以模拟上面的3条指令，然后会发现他们的机器状态结果都是一样的：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">stack: []</span><br><span class="line">store: &#123; 0x0 =&gt; 0x1 &#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="两个存储变量"><a href="#两个存储变量" class="headerlink" title="两个存储变量"></a>两个存储变量</h2><p>让我们再额外的增加一个相同类型的存储变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">// c2.sol</span><br><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">    uint256 a;</span><br><span class="line">    uint256 b;</span><br><span class="line">    function C() &#123;</span><br><span class="line">      a = 1;</span><br><span class="line">      b = 2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>编译之后，主要来看<code>tag_2</code>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">$ solc --bin --asm c2.sol</span><br><span class="line">//前面的代码忽略了</span><br><span class="line">tag_2:</span><br><span class="line">    /* &quot;c2.sol&quot;:99:100  1 */</span><br><span class="line">  0x1</span><br><span class="line">    /* &quot;c2.sol&quot;:95:96  a */</span><br><span class="line">  0x0</span><br><span class="line">    /* &quot;c2.sol&quot;:95:100  a = 1 */</span><br><span class="line">  dup2</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br><span class="line">  pop</span><br><span class="line">    /* &quot;c2.sol&quot;:112:113  2 */</span><br><span class="line">  0x2</span><br><span class="line">    /* &quot;c2.sol&quot;:108:109  b */</span><br><span class="line">  0x1</span><br><span class="line">    /* &quot;c2.sol&quot;:108:113  b = 2 */</span><br><span class="line">  dup2</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br><span class="line">  pop</span><br></pre></td></tr></table></figure></p>
+<p>汇编的伪代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// a = 1</span><br><span class="line">sstore(0x0, 0x1)</span><br><span class="line">// b = 2</span><br><span class="line">sstore(0x1, 0x2)</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到两个存储变量的存储位置是依次排列的，<code>a</code>在<code>0x0</code>的位置而<code>b</code>在<code>0x1</code>的位置。</p>
+<h2 id="存储打包"><a href="#存储打包" class="headerlink" title="存储打包"></a>存储打包</h2><p>每个存储槽都可以存储32个字节。如果一个变量只需要16个字节但是使用全部的32个字节会很浪费。Solidity为了高效存储，提供了一个优化方案：如果可以的话，就将两个小一点的数据类型进行打包然后存储在一个存储槽中。</p>
+<p>我们将<code>a</code>和<code>b</code>修改成16字节的变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">    uint128 a;</span><br><span class="line">    uint128 b;</span><br><span class="line">    function C() &#123;</span><br><span class="line">      a = 1;</span><br><span class="line">      b = 2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>编译此合约：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ solc --bin --asm c3.sol</span><br></pre></td></tr></table></figure></p>
+<p>产生的汇编代码现在更加的复杂一些：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">tag_2:</span><br><span class="line">  // a = 1</span><br><span class="line">  0x1</span><br><span class="line">  0x0</span><br><span class="line">  dup1</span><br><span class="line">  0x100</span><br><span class="line">  exp</span><br><span class="line">  dup2</span><br><span class="line">  sload</span><br><span class="line">  dup2</span><br><span class="line">  0xffffffffffffffffffffffffffffffff</span><br><span class="line">  mul</span><br><span class="line">  not</span><br><span class="line">  and</span><br><span class="line">  swap1</span><br><span class="line">  dup4</span><br><span class="line">  0xffffffffffffffffffffffffffffffff</span><br><span class="line">  and</span><br><span class="line">  mul</span><br><span class="line">  or</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br><span class="line">  pop</span><br><span class="line">  // b = 2</span><br><span class="line">  0x2</span><br><span class="line">  0x0</span><br><span class="line">  0x10</span><br><span class="line">  0x100</span><br><span class="line">  exp</span><br><span class="line">  dup2</span><br><span class="line">  sload</span><br><span class="line">  dup2</span><br><span class="line">  0xffffffffffffffffffffffffffffffff</span><br><span class="line">  mul</span><br><span class="line">  not</span><br><span class="line">  and</span><br><span class="line">  swap1</span><br><span class="line">  dup4</span><br><span class="line">  0xffffffffffffffffffffffffffffffff</span><br><span class="line">  and</span><br><span class="line">  mul</span><br><span class="line">  or</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br><span class="line">  pop</span><br></pre></td></tr></table></figure></p>
+<p>上面的汇编代码将这两个变量打包放在一个存储位置(<code>0x0</code>)上，就像这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[         b         ][         a         ]</span><br><span class="line">[16 bytes / 128 bits][16 bytes / 128 bits]</span><br></pre></td></tr></table></figure></p>
+<p>进行打包的原因是因为目前最昂贵的操作就是存储的使用：</p>
+<ul>
+<li><code>sstore</code>指令第一次写入一个新位置需要花费20000 gas</li>
+<li><code>sstore</code>指令后续写入一个已存在的位置需要花费5000 gas</li>
+<li><code>sload</code>指令的成本是500 gas</li>
+<li>大多数的指令成本是3~10 gas</li>
+</ul>
+<p>通过使用相同的存储位置，Solidity为存储第二个变量支付5000 gas，而不是20000 gas，节约了15000 gas。</p>
+<h2 id="更多优化"><a href="#更多优化" class="headerlink" title="更多优化"></a>更多优化</h2><p>应该可以将两个128位的数打包成一个数放入内存中，然后使用一个’sstore’指令进行存储操作，而不是使用两个单独的<code>sstore</code>命令来存储变量<code>a</code>和<code>b</code>，这样就额外的又省了5000 gas。</p>
+<p>你可以通过添加<code>optimize</code>选项来让Solidity实现上面的优化：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ solc --bin --asm --optimize c3.sol</span><br></pre></td></tr></table></figure></p>
+<p>这样产生的汇编代码只有一个<code>sload</code>指令和一个<code>sstore</code>指令:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">tag_2:</span><br><span class="line">    /* &quot;c3.sol&quot;:95:96  a */</span><br><span class="line">  0x0</span><br><span class="line">    /* &quot;c3.sol&quot;:95:100  a = 1 */</span><br><span class="line">  dup1</span><br><span class="line">  sload</span><br><span class="line">    /* &quot;c3.sol&quot;:108:113  b = 2 */</span><br><span class="line">  0x200000000000000000000000000000000</span><br><span class="line">  not(sub(exp(0x2, 0x80), 0x1))</span><br><span class="line">    /* &quot;c3.sol&quot;:95:100  a = 1 */</span><br><span class="line">  swap1</span><br><span class="line">  swap2</span><br><span class="line">  and</span><br><span class="line">    /* &quot;c3.sol&quot;:99:100  1 */</span><br><span class="line">  0x1</span><br><span class="line">    /* &quot;c3.sol&quot;:95:100  a = 1 */</span><br><span class="line">  or</span><br><span class="line">  sub(exp(0x2, 0x80), 0x1)</span><br><span class="line">    /* &quot;c3.sol&quot;:108:113  b = 2 */</span><br><span class="line">  and</span><br><span class="line">  or</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br></pre></td></tr></table></figure></p>
+<p>字节码是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">600080547002000000000000000000000000000000006001608060020a03199091166001176001608060020a0316179055</span><br></pre></td></tr></table></figure></p>
+<p>将字节码解析成一行一指令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">// push 0x0</span><br><span class="line">60 00</span><br><span class="line">// dup1</span><br><span class="line">80</span><br><span class="line">// sload</span><br><span class="line">54</span><br><span class="line">// push17 将下面17个字节作为一个32个字的数值压入栈中</span><br><span class="line">70 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">/* not(sub(exp(0x2, 0x80), 0x1)) */</span><br><span class="line">// push 0x1</span><br><span class="line">60 01</span><br><span class="line">// push 0x80 (32)</span><br><span class="line">60 80</span><br><span class="line">// push 0x80 (2)</span><br><span class="line">60 02</span><br><span class="line">// exp</span><br><span class="line">0a</span><br><span class="line">// sub</span><br><span class="line">03</span><br><span class="line">// not</span><br><span class="line">19</span><br><span class="line">// swap1</span><br><span class="line">90</span><br><span class="line">// swap2</span><br><span class="line">91</span><br><span class="line">// and</span><br><span class="line">16</span><br><span class="line">// push 0x1</span><br><span class="line">60 01</span><br><span class="line">// or</span><br><span class="line">17</span><br><span class="line">/* sub(exp(0x2, 0x80), 0x1) */</span><br><span class="line">// push 0x1</span><br><span class="line">60 01</span><br><span class="line">// push 0x80</span><br><span class="line">60 80</span><br><span class="line">// push 0x02</span><br><span class="line">60 02</span><br><span class="line">// exp</span><br><span class="line">0a</span><br><span class="line">// sub</span><br><span class="line">03</span><br><span class="line">// and</span><br><span class="line">16</span><br><span class="line">// or</span><br><span class="line">17</span><br><span class="line">// swap1</span><br><span class="line">90</span><br><span class="line">// sstore</span><br><span class="line">55</span><br></pre></td></tr></table></figure></p>
+<p>上面的汇编代码中使用了4个神奇的数值：</p>
+<ul>
+<li><p>0x1(16字节)，使用低16字节</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// 在字节码中表示为0x01</span><br><span class="line">16:32 0x00000000000000000000000000000000</span><br><span class="line">00:16 0x00000000000000000000000000000001</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>0x2(16字节)，使用高16字节</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">//在字节码中表示为0x200000000000000000000000000000000 </span><br><span class="line">16:32 0x00000000000000000000000000000002</span><br><span class="line">00:16 0x00000000000000000000000000000000</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>not(sub(exp(0x2, 0x80), 0x1))</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// 高16字节的掩码</span><br><span class="line">16:32 0x00000000000000000000000000000000 </span><br><span class="line">00:16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>sub(exp(0x2, 0x80), 0x1)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// 低16字节的掩码</span><br><span class="line">16:32 0x00000000000000000000000000000000 </span><br><span class="line">00:16 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>代码将这些数值进行了一些位的转换来达到想要的结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">16:32 0x00000000000000000000000000000002 </span><br><span class="line">00:16 0x00000000000000000000000000000001</span><br></pre></td></tr></table></figure></p>
+<p>最后，该32字节的数值被保存在了<code>0x0</code>的位置上。</p>
+<h2 id="Gas-的使用"><a href="#Gas-的使用" class="headerlink" title="Gas 的使用"></a>Gas 的使用</h2><blockquote>
+<p>60008054700<strong>200000000000000000000000000000000</strong>6001608060020a03199091166001176001608060020a0316179055</p>
+</blockquote>
+<p>注意<code>0x200000000000000000000000000000000</code>被嵌入到了字节码中。但是编译器也可能选择使用<code>exp(0x2, 0x81)</code>指令来计算数值，这会导致更短的字节码序列。</p>
+<p>但结果是<code>0x200000000000000000000000000000000</code>比<code>exp(0x2, 0x81)</code>更便宜。让我们看看与gas费用相关的信息：</p>
+<ul>
+<li>一笔交易的每个零字节的数据或代码费用为 4 gas</li>
+<li>一笔交易的每个非零字节的数据或代码的费用为 68 gas</li>
+</ul>
+<p>来计算下两个表示方式所花费的gas成本：</p>
+<ul>
+<li><p><code>0x200000000000000000000000000000000</code>字节码包含了很多的0，更加的便宜。<br>(1 <em> 68) + (32 </em> 4) = 196</p>
+</li>
+<li><p><code>608160020a</code>字节码更短，但是没有0。<br>5 * 68 = 340</p>
+</li>
+</ul>
+<p>更长的字节码序列有很多的0，所以实际上更加的便宜！</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>EVM的编译器实际上不会为字节码的大小、速度或内存高效性进行优化。相反，它会为gas的使用进行优化，这间接鼓励了计算的排序，让以太坊区块链可以更高效一点。</p>
+<p>我们也看到了EVM一些奇特的地方：</p>
+<ul>
+<li>EVM是一个256位的机器。以32字节来处理数据是最自然的</li>
+<li>持久存储是相当昂贵的</li>
+<li>Solidity编译器会为了减少gas的使用而做出相应的优化选择</li>
+</ul>
+<p>Gas成本的设置有一点武断，也许未来会改变。当成本改变的时候，编译器也会做出不同的优化选择。</p>
+<p>本系列文章其他部分译文链接：</p>
+<ul>
+<li><a href="http://www.jianshu.com/p/9df8d15418ed">固定长度数据类型的表示方法(第2部分)</a></li>
+<li><a href="http://www.jianshu.com/p/af5721c79505">动态数据类型的表示方法(第3部分)</a></li>
+<li><a href="http://www.jianshu.com/p/d0e8e825d41b">ABI编码外部方法调用的方式(第4部分)</a></li>
+<li><a href="http://www.jianshu.com/p/d9137e87c9d3">一个新合约被创建后会发生什么(第5部分)</a></li>
+</ul>
+<p>翻译作者: <a href="https://lilymoana.github.io/">许莉</a><br>原文地址：<a href="https://medium.com/@hayeah/diving-into-the-ethereum-vm-6e8d5d2f3c30">Diving Into The Ethereum VM Part One</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/evm_part1.html">深入了解以太坊虚拟机</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 XU LI 的个人博客">XU LI</a></p>
+        <p><span>发布时间:</span>2017年10月30日 - 16时48分</p>
+        <p><span>最后更新:</span>2017年11月22日 - 13时25分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/evm_part1.html" title="深入了解以太坊虚拟机">https://lilymoana.github.io/evm_part1.html</a>
+            <span class="copy-path" data-clipboard-text="原文: https://lilymoana.github.io/evm_part1.html　　作者: XU LI" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/ConsensusCompare.html" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          共识算法的比较：Casper vs Tendermint
+        
+      </div>
+    </a>
+  
+  
+    <a  href="/evm_part2.html" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一个简单的合约"><span class="toc-number">1.</span> <span class="toc-text">一个简单的合约</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一小步一小步的来"><span class="toc-number">2.</span> <span class="toc-text">一小步一小步的来</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模拟EVM"><span class="toc-number">3.</span> <span class="toc-text">模拟EVM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#两个存储变量"><span class="toc-number">4.</span> <span class="toc-text">两个存储变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#存储打包"><span class="toc-number">5.</span> <span class="toc-text">存储打包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更多优化"><span class="toc-number">6.</span> <span class="toc-text">更多优化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Gas-的使用"><span class="toc-number">7.</span> <span class="toc-text">Gas 的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">8.</span> <span class="toc-text">总结</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="hide it"  title="click the button to show or hide catalogs of this article">
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "hide it";
+    var valueShow = "show it";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/ConsensusCompare.html" title="上一篇: 共识算法的比较：Casper vs Tendermint">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/evm_part2.html" title="下一篇: 深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/ConsensusCompare.html">共识算法的比较：Casper vs Tendermint</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part1.html">深入了解以太坊虚拟机</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part2.html">深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part3.html">深入了解以太坊虚拟机第3部分——动态数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part4.html">深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part5.html">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</a></li><li class="post-list-item"><a class="post-list-link" href="/ethereum_theory.html">以太坊的工作原理</a></li><li class="post-list-item"><a class="post-list-link" href="/SPV.html">简易支付验证能支持数十亿的比特币用户吗？</a></li><li class="post-list-item"><a class="post-list-link" href="/Eng_C-ABCI.html">C Language Implemented Tendermint ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/Chi_C-ABCI.html">C语言实现的ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/DPOS.html">DPOS共识算法—缺失的白皮书</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2017 XU LI
+            </div>
+            <div class="footer-right">
+                <a href="https://hexo.io/" target="_blank">Hexo</a><a href="https://github.com/lilymoana" target="_blank">Blog</a> by XuLi
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 4;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

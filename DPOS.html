@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>DPOS共识算法—缺失的白皮书 | Lily&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="这是一份缺失的白皮书以及对委托权益共识算法（DPOS）的分析！这篇文章的目的就是提供一个分析，为什么DPOS可以行的通以及是什么使得它很强大！一篇早期对于DPOS介绍的文章可以在bitshares.org看到，不过这篇介绍中也包含了很多不属于真正共识处理的其他方面。">
+<meta name="keywords" content="blockchain,consensus">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DPOS共识算法—缺失的白皮书">
+<meta property="og:url" content="https://lilymoana.github.io/DPOS.html">
+<meta property="og:site_name" content="Lily&#39;s Blog">
+<meta property="og:description" content="这是一份缺失的白皮书以及对委托权益共识算法（DPOS）的分析！这篇文章的目的就是提供一个分析，为什么DPOS可以行的通以及是什么使得它很强大！一篇早期对于DPOS介绍的文章可以在bitshares.org看到，不过这篇介绍中也包含了很多不属于真正共识处理的其他方面。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_normal.png">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_minority.png">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_disconnect.png">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_fragmentation.png">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_connected.png">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_irreversible.png">
+<meta property="og:image" content="https://lilymoana.github.io/asset/dpos_corruption.png">
+<meta property="og:updated_time" content="2017-11-22T05:25:28.822Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="DPOS共识算法—缺失的白皮书">
+<meta name="twitter:description" content="这是一份缺失的白皮书以及对委托权益共识算法（DPOS）的分析！这篇文章的目的就是提供一个分析，为什么DPOS可以行的通以及是什么使得它很强大！一篇早期对于DPOS介绍的文章可以在bitshares.org看到，不过这篇介绍中也包含了很多不属于真正共识处理的其他方面。">
+<meta name="twitter:image" content="https://lilymoana.github.io/asset/dpos_normal.png">
+  
+    <link rel="alternative" href="/atom.xml" title="Lily&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.jpg" class="js-avatar" src="/img/avatar.jpg">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">XU LI</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">Winter is coming !</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder=" Search...">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Links</li>
+                        
+                        
+                        <li>Motto</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">分类阅读</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                            
+                                <a class="fl twitter"  target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                            
+                                <a class="fl wechat"  target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Consensus/" style="font-size: 10px;">Consensus</a> <a href="/tags/bitcoin/" style="font-size: 10px;">bitcoin</a> <a href="/tags/blockchain/" style="font-size: 20px;">blockchain</a> <a href="/tags/c/" style="font-size: 13.33px;">c</a> <a href="/tags/consensus/" style="font-size: 10px;">consensus</a> <a href="/tags/ethereum/" style="font-size: 16.67px;">ethereum</a>
+                    </div>
+                </section>
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="https://gguoss.github.io/">blog</a>
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="http://www.jianshu.com/u/efa3e72bbb80">简书</a>
+                    
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-motto">The meaning of life is to give life a meaning !</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">XU LI</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.jpg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">XU LI</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">Winter is coming !</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">分类阅读</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                    
+                        <a class="twitter" target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                    
+                        <a class="wechat" target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-DPOS" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/DPOS.html" class="article-date">
+      <time datetime="2017-09-25T10:52:12.000Z" itemprop="datePublished">2017-09-25</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      DPOS共识算法—缺失的白皮书
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/translation/">translation</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/blockchain/">blockchain</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/consensus/">consensus</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p><strong> </strong>  <Excerpt in index | Homepage Digest><br>这是一份缺失的白皮书以及对委托权益共识算法（DPOS）的分析！这篇文章的目的就是提供一个分析，为什么DPOS可以行的通以及是什么使得它很强大！一篇早期对于DPOS介绍的文章可以在<a href="https://bitshares.org/technology/delegated-proof-of-stake-consensus/">bitshares.org</a>看到，不过这篇介绍中也包含了很多不属于真正共识处理的其他方面。</p>
+<a id="more"></a>
+<The rest of contents | Rest of all>
+
+<p>翻译作者：<a href="https://lilymoana.github.io/">许莉</a><br>原文地址：<a href="https://steemit.com/dpos/@dantheman/dpos-consensus-algorithm-this-missing-white-paper">DPOS Consensus Algorithm</a></p>
+<p>所有的区块链基本上都是一个确定性的状态机，根据交易来行动。共识就是对交易顺序的确定性达成一致以及过滤无效交易的过程。也有很多不同的共识算法能够产生相同的交易顺序，但是通过多年来在多个区块链上的可靠运行，DPOS被证明了是很强大、安全和高效的。</p>
+<h2 id="DPOS共识算法摘要"><a href="#DPOS共识算法摘要" class="headerlink" title="DPOS共识算法摘要"></a>DPOS共识算法摘要</h2><p>DPOS共识算法分为两个部分：选举一群区块生产者和调度生产。选举过程是为了保证利益相关者最终掌握控制权，因为当网络没有正常运行时利益相关者损失的最多。区块生产者是如何选举出来对于共识是如何达成的几乎没有影响。因此，本文主要讲解当一个区块生产者被选举出来之后共识是如何达成的。</p>
+<p>为了解释这个算法，我假设有3个区块生产者：A、B、C。因为共识的达成需要2/3+1多数来解决所有情况，这个简单的模型假设区块生产者C是决胜者。在现实世界中会有21个区块生产者或者更多。就像工作量证明，一般规则就是最长的链胜出。任何时候一个诚实的对端看见一个有效的长链都会将自己从当前的分支切换到最长链上。</p>
+<h2 id="正常流程"><a href="#正常流程" class="headerlink" title="正常流程"></a>正常流程</h2><p>在正常流程下区块生产者会轮流每3秒钟来生产一个区块。假设每次轮流到的人都产生了自己该产生的区块，那么将会产生最长链。区块生产者在不属于自己产生区块之外的其他任何时间间隙产生的区块都是无效的。<br><img src="/asset/dpos_normal.png" alt=""> </p>
+<h2 id="少数者分支"><a href="#少数者分支" class="headerlink" title="少数者分支"></a>少数者分支</h2><p>最多允许1/3的节点可以是恶意的或者存在故障，创造了一个少数者分支。这种情况下少数者分支只会每9秒钟产生一个区块，而多数者分支则会每9秒钟生产2个区块。再一次，诚实的2/3多数者将永远会比少数者分支的链要长。<br><img src="/asset/dpos_minority.png" alt=""> </p>
+<h2 id="未连接的少数者双重生产"><a href="#未连接的少数者双重生产" class="headerlink" title="未连接的少数者双重生产"></a>未连接的少数者双重生产</h2><p>这个少数者可以尝试产生无数的分支，但是所有的分支上的链都会比多数者的链要短，因为少数者被限制区块的生产要比多数者慢。<br><img src="/asset/dpos_disconnect.png" alt=""></p>
+<h2 id="网络分片"><a href="#网络分片" class="headerlink" title="网络分片"></a>网络分片</h2><p>网络完全有可能碎片化，在网络碎片化时没有任何分支拥有多数区块生产者。在这种情况下，最长的链将会在最大的少数者上产生。当网络的连通性恢复之后小一些的少数者会自动的切换到最长链上，明确的共识也随之恢复。<br><img src="/asset/dpos_fragmentation.png" alt=""></p>
+<p>有可能会出现3个分支中2个链长一点的分支，链的长度是一样的。这种情况下当第三个（链短一点的分支）分支上的区块生产者重新加入到网络时就会打破这种平衡。区块生产者的数量是奇数所以这种情况不会维持太长时间。后面我们也会对区块生产者重新洗牌，让生产区块的顺序随机化，来保证即使两个分支拥有相同数量的区块生产者，分支也将会在不同的长度爆发生长，导致一个分支接管另一个分支。</p>
+<h2 id="连接的少数者双重生产"><a href="#连接的少数者双重生产" class="headerlink" title="连接的少数者双重生产"></a>连接的少数者双重生产</h2><p>在这种场景下少数者B在属于他的时间间隙生产2个或者更多其他的区块。下一个预订的区块生产者(C)，也许会选择在任何一个由B生产的区块上生产链。当C生产出一个区块之后，它将会变成一个最长链，所有选择B1的节点都会切换到最长链的分支上。不论少数恶意区块生产者尝试传播多少其他的区块都没有关系，这些区块在最长链中存在的时间永远不会超过一个回合的时间。<br><img src="/asset/dpos_connected.png" alt=""></p>
+<h2 id="最后不可逆区块"><a href="#最后不可逆区块" class="headerlink" title="最后不可逆区块"></a>最后不可逆区块</h2><p>在网络分片事件中是有可能存在多个分支继续生长了一段延长时间。在长期来看，最长的链将会胜出，但是观测者要求有个方法可以确定的知道一个区块绝对是增长最快的链中的一部分。这个可以根据看到区块生产者们的超过2/3的确认消息就能确定。</p>
+<p>在下图中，区块B被C和代表着多数2/3+1确认的A确认过，因此我们可以推测只要2/3的区块生产者都是诚实的那么就没有其他的链会比这个链更长。<br><img src="/asset/dpos_irreversible.png" alt=""></p>
+<p>注意这个“规则”与比特币的6个块确认是相似的。一些聪明的人可以设计出一系列的事件让两个不同的节点在出现在不同的最后不可逆区块上。这种边缘案例要求攻击者能够完全掌控通信延时，并且需要在几分钟之内，不是一次，而是两次使用这个控制力。如果这种事情发生了，那么长期来看，最长链的规则依然有效。我们估计这种攻击事件发生的概率基本为0，而且就算发生了，对于资金基本上造成的影响小到你都不用去担心。</p>
+<h2 id="缺少区块生产者法定数"><a href="#缺少区块生产者法定数" class="headerlink" title="缺少区块生产者法定数"></a>缺少区块生产者法定数</h2><p>虽然可能性比较小，但是也可能存在区块生产者的法定数不明确，这种情况对于少数者还是有可能继续生产块的，在这些块中利益相关者可以包含更改投票的交易。然后这些投票可以选择一群新的区块生产者，让区块生产的参与率恢复到100%。一旦这种情况发生，少数者链将会最终超过其他参与率低于100%的链。</p>
+<p>在这个过程中所有的观察者都将会知道网络状态一直在变化指导区块生产参与率达到了67%。那些选择在这种情况下进行交易的人冒的风险大概跟没有得到6个块确认的交易差不多。他们是在知道有很小的可能性存在共识可能最终选择了一条不同的分叉进行操作的。在现实中这种情况比接收一个少于3个确认的比特币区块要安全的多。</p>
+<h2 id="多数区块生产者腐败"><a href="#多数区块生产者腐败" class="headerlink" title="多数区块生产者腐败"></a>多数区块生产者腐败</h2><p>如果多数的区块生产者都变得腐败，那么他们就可以产生无数的分叉，每个都将以2/3多数确认进行着。在这种情况下，最后不可逆区块算法就会恢复成最长链算法。那么被最大的多数者所认可的链将会成为最长链， 谁是最大的多数者由剩下少数诚实的节点来决定。这种行为不会维持较长的时间，因为利益相关者最终会选择投票替换这些区块生产者。<br><img src="/asset/dpos_corruption.png" alt=""></p>
+<h2 id="交易作为权益证明（TaPoS）"><a href="#交易作为权益证明（TaPoS）" class="headerlink" title="交易作为权益证明（TaPoS）"></a>交易作为权益证明（TaPoS）</h2><p>当用户签名一个交易的时候，他们是在对区块链的状态有个确定猜想下进行签名的。这个猜想建立在他们对近期区块的看法。如果最长链的共识发生了改变，那么可能会使签名者在他们认可交易时产生的猜想无效化。</p>
+<p>由于TaPoS, 当一个区块在链的历史中不存在，所有的交易包括最近一个区块的hash值都被认为是无效的。任何在孤儿分支对交易签名的人将会发现交易是无效的，而且是无法迁移到主分支上的。</p>
+<p>这个处理的一个附带作用就是安全性，可以抵御试图产生替代链的长期攻击。各利益相关方每次在交易的时候都会直接确认区块链。随着时间的流逝，所有的区块都被所有的利益相关者确认，而这一点是无法在伪造的链中被复制的。</p>
+<h2 id="确定的区块生产者洗牌"><a href="#确定的区块生产者洗牌" class="headerlink" title="确定的区块生产者洗牌"></a>确定的区块生产者洗牌</h2><p>在所有的列子中我们展示了区块生产者的循环调度。在现实中一群区块生产者会在N个块（N代表的区块生产者的数量）之后会被洗牌一次。这种随机性保证区块生产者B不会总是忽略区块生产者A，也确保每当有多个相同数量的区块生产者的分叉出现时，僵局都能被打破。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>DPOS在任何能够想得到的自然网络中断情况下还是稳健的，即使面对大多数的区块生产者舞弊也是安全的。不像一些竞争算法，DPOS在多数区块生产者出现故障的时候也可以正常工作。在这个期间，社区可以投票来选择新的区块生产者来代替这些出现故障的区块生产者直到区块生产者的参与率达到100%。我知道没有其他的共识算法可以在如此高频率且多变的失败环境下还能如此稳健。</p>
+<p>DPOS从选择一个选举区块生产者的共识算法而最终获得重要的安全性，并认证节点的高质量和唯一性。使用投票同意的处理机制确保了即使是拥有50%投票权的人，也无法依靠自己的权利选择哪怕一个区块生产者。DPOS旨在优化具有强大网络连接，且名义上诚实节点参与率为100%条件下的性能。这让DPOS有能力在平均1.5s内拥有99.9%的确定性来确认一笔交易，同时以优雅的方式，能在降级服务中恢复。</p>
+<p>其它的共识算法设计来支持较差网络的，和面对非诚实的节点。这将导致最终的可选设计只能是更慢的网络性能，更高的延迟，高通信开销，并且在33%的节点故障时将导致整个网络挂掉。</p>
+<p>在BitShares3年，Steem一年的成功运营中，我们经历了各种网络条件和软件bug。 DPOS已经成功地经历了这种环境，并展示了保持共识时，比任何其他链处理更多的交易时的能力</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/DPOS.html">DPOS共识算法—缺失的白皮书</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 XU LI 的个人博客">XU LI</a></p>
+        <p><span>发布时间:</span>2017年09月25日 - 18时52分</p>
+        <p><span>最后更新:</span>2017年11月22日 - 13时25分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/DPOS.html" title="DPOS共识算法—缺失的白皮书">https://lilymoana.github.io/DPOS.html</a>
+            <span class="copy-path" data-clipboard-text="原文: https://lilymoana.github.io/DPOS.html　　作者: XU LI" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/Chi_C-ABCI.html" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          C语言实现的ABCI
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#DPOS共识算法摘要"><span class="toc-number">1.</span> <span class="toc-text">DPOS共识算法摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#正常流程"><span class="toc-number">2.</span> <span class="toc-text">正常流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#少数者分支"><span class="toc-number">3.</span> <span class="toc-text">少数者分支</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#未连接的少数者双重生产"><span class="toc-number">4.</span> <span class="toc-text">未连接的少数者双重生产</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#网络分片"><span class="toc-number">5.</span> <span class="toc-text">网络分片</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#连接的少数者双重生产"><span class="toc-number">6.</span> <span class="toc-text">连接的少数者双重生产</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#最后不可逆区块"><span class="toc-number">7.</span> <span class="toc-text">最后不可逆区块</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#缺少区块生产者法定数"><span class="toc-number">8.</span> <span class="toc-text">缺少区块生产者法定数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#多数区块生产者腐败"><span class="toc-number">9.</span> <span class="toc-text">多数区块生产者腐败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#交易作为权益证明（TaPoS）"><span class="toc-number">10.</span> <span class="toc-text">交易作为权益证明（TaPoS）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#确定的区块生产者洗牌"><span class="toc-number">11.</span> <span class="toc-text">确定的区块生产者洗牌</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">12.</span> <span class="toc-text">总结</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="hide it"  title="click the button to show or hide catalogs of this article">
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "hide it";
+    var valueShow = "show it";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/Chi_C-ABCI.html" title="上一篇: C语言实现的ABCI">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/ConsensusCompare.html">共识算法的比较：Casper vs Tendermint</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part1.html">深入了解以太坊虚拟机</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part2.html">深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part3.html">深入了解以太坊虚拟机第3部分——动态数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part4.html">深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part5.html">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</a></li><li class="post-list-item"><a class="post-list-link" href="/ethereum_theory.html">以太坊的工作原理</a></li><li class="post-list-item"><a class="post-list-link" href="/SPV.html">简易支付验证能支持数十亿的比特币用户吗？</a></li><li class="post-list-item"><a class="post-list-link" href="/Eng_C-ABCI.html">C Language Implemented Tendermint ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/Chi_C-ABCI.html">C语言实现的ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/DPOS.html">DPOS共识算法—缺失的白皮书</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2017 XU LI
+            </div>
+            <div class="footer-right">
+                <a href="https://hexo.io/" target="_blank">Hexo</a><a href="https://github.com/lilymoana" target="_blank">Blog</a> by XuLi
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 4;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

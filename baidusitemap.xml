@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/evm_part2.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</title>
+        <pubTime>2017-10-30T07:45:39.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>ethereum</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/Chi_C-ABCI.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>C语言实现的ABCI</title>
+        <pubTime>2017-09-26T01:52:12.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>c</tag>
+         
+         
+           
+             
+              <breadCrumb title="original" url="https://lilymoana.github.io/categories/original/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/ConsensusCompare.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>共识算法的比较：Casper vs Tendermint</title>
+        <pubTime>2017-11-18T11:18:05.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>Consensus</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/Eng_C-ABCI.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>C Language Implemented Tendermint ABCI</title>
+        <pubTime>2017-09-26T03:53:12.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>c</tag>
+         
+         
+           
+             
+              <breadCrumb title="original" url="https://lilymoana.github.io/categories/original/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/SPV.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>简易支付验证能支持数十亿的比特币用户吗？</title>
+        <pubTime>2017-09-26T07:03:13.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>bitcoin</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/evm_part1.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>深入了解以太坊虚拟机</title>
+        <pubTime>2017-10-30T08:48:52.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>ethereum</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/ethereum_theory.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>以太坊的工作原理</title>
+        <pubTime>2017-09-28T04:09:05.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>ethereum</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/DPOS.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>DPOS共识算法—缺失的白皮书</title>
+        <pubTime>2017-09-25T10:52:12.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>consensus</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/evm_part3.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>深入了解以太坊虚拟机第3部分——动态数据类型的表示方法</title>
+        <pubTime>2017-10-30T07:42:10.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>ethereum</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/evm_part4.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</title>
+        <pubTime>2017-10-30T07:35:07.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>ethereum</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>https://lilymoana.github.io/evm_part5.html</loc>
+    <lastmod>2017-11-22T05:25:28.822Z</lastmod>
+    <data>
+        <display>
+        <title>深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</title>
+        <pubTime>2017-10-30T07:07:34.000Z</pubTime>
+        
+        <tag>blockchain</tag>
+         
+        <tag>ethereum</tag>
+         
+         
+           
+             
+              <breadCrumb title="translation" url="https://lilymoana.github.io/categories/translation/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+    
+    
+    
+</urlset>

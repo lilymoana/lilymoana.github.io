@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式 | Lily&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="深入了解以太坊虚拟机是一个系列的文章，本文是第4篇，本系列其他部分的译文链接在文章结尾处">
+<meta name="keywords" content="blockchain,ethereum">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式">
+<meta property="og:url" content="https://lilymoana.github.io/evm_part4.html">
+<meta property="og:site_name" content="Lily&#39;s Blog">
+<meta property="og:description" content="深入了解以太坊虚拟机是一个系列的文章，本文是第4篇，本系列其他部分的译文链接在文章结尾处">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://lilymoana.github.io/asset/evmp4_head.jpeg">
+<meta property="og:image" content="https://lilymoana.github.io/asset/evmp4_transation.jpeg">
+<meta property="og:image" content="https://lilymoana.github.io/asset/evmp4_zero.jpeg">
+<meta property="og:updated_time" content="2017-11-22T05:25:28.822Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式">
+<meta name="twitter:description" content="深入了解以太坊虚拟机是一个系列的文章，本文是第4篇，本系列其他部分的译文链接在文章结尾处">
+<meta name="twitter:image" content="https://lilymoana.github.io/asset/evmp4_head.jpeg">
+  
+    <link rel="alternative" href="/atom.xml" title="Lily&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.jpg" class="js-avatar" src="/img/avatar.jpg">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">XU LI</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">Winter is coming !</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder=" Search...">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Links</li>
+                        
+                        
+                        <li>Motto</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">分类阅读</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                            
+                                <a class="fl twitter"  target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                            
+                                <a class="fl wechat"  target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Consensus/" style="font-size: 10px;">Consensus</a> <a href="/tags/bitcoin/" style="font-size: 10px;">bitcoin</a> <a href="/tags/blockchain/" style="font-size: 20px;">blockchain</a> <a href="/tags/c/" style="font-size: 13.33px;">c</a> <a href="/tags/consensus/" style="font-size: 10px;">consensus</a> <a href="/tags/ethereum/" style="font-size: 16.67px;">ethereum</a>
+                    </div>
+                </section>
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="https://gguoss.github.io/">blog</a>
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="http://www.jianshu.com/u/efa3e72bbb80">简书</a>
+                    
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-motto">The meaning of life is to give life a meaning !</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">XU LI</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.jpg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">XU LI</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">Winter is coming !</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">分类阅读</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                    
+                        <a class="twitter" target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                    
+                        <a class="wechat" target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-evm_part4" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/evm_part4.html" class="article-date">
+      <time datetime="2017-10-30T07:35:07.000Z" itemprop="datePublished">2017-10-30</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/translation/">translation</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/blockchain/">blockchain</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ethereum/">ethereum</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p><strong> </strong>  <Excerpt in index | Homepage Digest></p>
+<p>深入了解以太坊虚拟机是一个系列的文章，本文是第4篇，本系列其他部分的译文链接在文章结尾处</p>
+<a id="more"></a>
+<The rest of contents | Rest of all>
+
+<p><img src="/asset/evmp4_head.jpeg" alt=""> </p>
+<p>在本系列的上一篇文章中我们看到了Solidity是如何在EVM存储器中表示复杂数据结构的。但是如果无法交互，数据就是没有意义的。智能合约就是数据和外界的中间体。</p>
+<p>在这篇文章中我们将会看到Solidity和EVM可以让外部程序来调用合约的方法并改变它的状态。</p>
+<p>“外部程序”不限于DApp/JavaScript。任何可以使用HTTP RPC与以太坊节点通信的程序，都可以通过创建一个交易与部署在区块链上的任何合约进行交互。</p>
+<p>创建一个交易就像发送一个HTTP请求。Web的服务器会接收你的HTTP请求，然后改变数据库。交易会被网络接收，底层的区块链会扩展到包含改变的状态。</p>
+<p>交易对于智能合约就像HTTP请求对于Web服务器。</p>
+<p>如果对EVM汇编和Solidity数据表示陌生，请阅读该系列的前几篇文章：<br>本系列文章其他部分译文链接：</p>
+<ul>
+<li><a href="http://www.jianshu.com/p/1969f3761208">EVM汇编代码的介绍(第1部分)</a></li>
+<li><a href="http://www.jianshu.com/p/9df8d15418ed">固定长度数据类型的表示方法(第2部分)</a></li>
+<li><a href="http://www.jianshu.com/p/af5721c79505">动态数据类型的表示方法(第3部分)</a></li>
+</ul>
+<h2 id="合约交易"><a href="#合约交易" class="headerlink" title="合约交易"></a>合约交易</h2><p>让我们来看一下将状态变量设置在<code>0x1</code>位置上的交易。我们想要交互的合约有一个对变量<code>a</code>的设置者和获取者：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">  uint256 a;</span><br><span class="line">  function setA(uint256 _a) &#123;</span><br><span class="line">    a = _a;</span><br><span class="line">  &#125;</span><br><span class="line">  function getA() returns(uint256) &#123;</span><br><span class="line">    return a;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个合约部署在Rinkeby测试网上。可以随意使用Etherscan，并搜索地址 <a href="https://rinkeby.etherscan.io/address/0x62650ae5c5777d1660cc17fcd4f48f6a66b9a4c2#code">0x62650ae5…</a>进行查看。</p>
+<p>我创建了一个可以调用<code>setA(1)</code>的交易，可以在地址<a href="https://rinkeby.etherscan.io/tx/0x7db471e5792bbf38dc784a5b983ee6a7bbe3f1db85dd4daede9ee88ed88057a5">0x7db471e5…</a>上查看该交易。<br><img src="/asset/evmp4_transation.jpeg" alt=""></p>
+<p>交易的输出数据是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0xee919d500000000000000000000000000000000000000000000000000000000000000001</span><br></pre></td></tr></table></figure></p>
+<p>对于EVM而言，这只是36字节的元数据。它对元数据不会进行处理，会直接将元数据作为<code>calldata</code>传递给智能合约。如果智能合约是个Solidity程序，那么它会将这些输入字节解释为方法调用，并为<code>setA(1)</code>执行适当的汇编代码。</p>
+<p>输入数据可以分成两个子部分：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 方法选择器(4字节)</span><br><span class="line">0xee919d5</span><br><span class="line">#第一个参数(32字节)</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000001</span><br></pre></td></tr></table></figure></p>
+<p>前面的4个字节是方法选择器，剩下的输入数据是方法的参数，32个字节的块。在这个例子中，只有一个参数，值是<code>0x1</code>。</p>
+<p>方法选择器是方法签名的 kecccak256 哈希值。在这个例子中方法的签名是<code>setA(uint256)</code>，也就是方法名称和参数的类型。</p>
+<p>让我们用Python来计算方法选择器。首先，哈希方法签名：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># 安装pyethereum [https://github.com/ethereum/pyethereum/#installation](https://github.com/ethereum/pyethereum/#installation)&gt; from ethereum.utils import sha3&gt; sha3(&quot;setA(uint256)&quot;).hex()&apos;ee919d50445cd9f463621849366a537968fe1ce096894b0d0c001528383d4769&apos;</span><br></pre></td></tr></table></figure></p>
+<p>然后获取哈希值的前4字节：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; sha3(&quot;setA(uint256)&quot;)[0:4].hex()</span><br><span class="line">&apos;ee919d50&apos;</span><br></pre></td></tr></table></figure></p>
+<h2 id="应用二进制接口（ABI）"><a href="#应用二进制接口（ABI）" class="headerlink" title="应用二进制接口（ABI）"></a>应用二进制接口（ABI）</h2><p>对于EVM而言，交易的输入数据(<code>calldata</code>)只是一个字节序列。EVM内部不支持调用方法。</p>
+<p>智能合约可以选择通过以结构化的方式处理输入数据来模拟方法调用，就像前面所说的那样。</p>
+<p>如果EVM上的所有语言都同意相同的方式解释输入数据，那么它们就可以很容易进行交互。 <a href="https://github.com/ethereum/wiki/wiki/Ethereum-Contract-ABI#formal-specification-of-the-encoding">合约应用二进制接口</a>（ABI）指定了一个通用的编码模式。</p>
+<p>我们已经看到了ABI是如何编码一个简单的方法调用，例如<code>SetA(1)</code>。在后面章节中我们将会看到方法调用和更复杂的参数是如何编码的。</p>
+<h2 id="调用一个获取者"><a href="#调用一个获取者" class="headerlink" title="调用一个获取者"></a>调用一个获取者</h2><p>如果你调用的方法改变了状态，那么整个网络必须要同意。这就需要有交易，并消耗gas。</p>
+<p>一个获取者如<code>getA()</code>不会改变任何东西。我们可以将方法调用发送到本地的以太坊节点，而不用请求整个网络来执行计算。一个<code>eth_call</code>RPC请求可以允许你在本地模拟交易。这对于只读方法或gas使用评估比较有帮助。</p>
+<p>一个<code>eth_call</code>就像一个缓存的HTTP GET请求。</p>
+<ul>
+<li>它不改变全球的共识状态</li>
+<li>本地区块链(“缓存”)可能会有点稍微过时</li>
+</ul>
+<p>制作一个<code>eth_call</code>来调用 <code>getA</code>方法，通过返回值来获取状态<code>a</code>。首先，计算方法选择器：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; sha3(&quot;getA()&quot;)[0:4].hex()</span><br><span class="line">&apos;d46300fd&apos;</span><br></pre></td></tr></table></figure></p>
+<p>由于没有参数，输入数据就只有方法选择器了。我们可以发送一个<code>eth_call</code>请求给任意的以太坊节点。对于这个例子，我们依然将请求发送给 infura.io的公共以太坊节点：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ curl -X POST \-H &quot;Content-Type: application/json&quot; \&quot;[https://rinkeby.infura.io/YOUR_INFURA_TOKEN](https://rinkeby.infura.io/YOUR_INFURA_TOKEN)&quot; \--data &apos;&#123;&quot;jsonrpc&quot;: &quot;2.0&quot;,&quot;id&quot;: 1,&quot;method&quot;: &quot;eth_call&quot;,&quot;params&quot;: [&#123;&quot;to&quot;: &quot;0x62650ae5c5777d1660cc17fcd4f48f6a66b9a4c2&quot;,&quot;data&quot;: &quot;0xd46300fd&quot;&#125;,&quot;latest&quot;]&#125;&apos;</span><br></pre></td></tr></table></figure></p>
+<p>EVM执行了计算并将元字节作为结果返回：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">&quot;jsonrpc&quot;:&quot;2.0&quot;,</span><br><span class="line">&quot;id&quot;:1,</span><br><span class="line">        &quot;result&quot;:&quot;0x0000000000000000000000000000000000000000000000000000000000000001&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>根据ABI，该字节应该会解释为<code>0x1</code>数值。</p>
+<h2 id="外部方法调用的汇编"><a href="#外部方法调用的汇编" class="headerlink" title="外部方法调用的汇编"></a>外部方法调用的汇编</h2><p>现在来看看编译的合约是如何处理源输入数据的，并以此来制作一个方法调用。思考一个定义了<code>setA(uint256)</code>的合约：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">  uint256 a;</span><br><span class="line">  // 注意: `payable` 让汇编简单一点点</span><br><span class="line">  function setA(uint256 _a) payable &#123;</span><br><span class="line">    a = _a;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>编译：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">solc --bin --asm --optimize call.sol</span><br></pre></td></tr></table></figure></p>
+<p>调用方法的汇编代码在合约内部，在<code>sub_0</code>标签下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">sub_0: assembly &#123;</span><br><span class="line">    mstore(0x40, 0x60)</span><br><span class="line">    and(div(calldataload(0x0), 0x100000000000000000000000000000000000000000000000000000000), 0xffffffff)</span><br><span class="line">    0xee919d50</span><br><span class="line">    dup2</span><br><span class="line">    eq</span><br><span class="line">    tag_2</span><br><span class="line">    jumpi</span><br><span class="line">  tag_1:</span><br><span class="line">    0x0</span><br><span class="line">    dup1</span><br><span class="line">    revert</span><br><span class="line">  tag_2:</span><br><span class="line">    tag_3</span><br><span class="line">    calldataload(0x4)</span><br><span class="line">    jump(tag_4)</span><br><span class="line">  tag_3:</span><br><span class="line">    stop</span><br><span class="line">  tag_4:</span><br><span class="line">      /* &quot;call.sol&quot;:95:96  a */</span><br><span class="line">    0x0</span><br><span class="line">      /* &quot;call.sol&quot;:95:101  a = _a */</span><br><span class="line">    dup2</span><br><span class="line">    swap1</span><br><span class="line">    sstore</span><br><span class="line">  tag_5:</span><br><span class="line">    pop</span><br><span class="line">    jump // 跳出</span><br><span class="line">auxdata: 0xa165627a7a7230582016353b5ec133c89560dea787de20e25e96284d67a632e9df74dd981cc4db7a0a0029</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里有两个样板代码与此讨论是无关的，但是仅供参考：</p>
+<ul>
+<li>最上面的<code>mstore(0x40, 0x60)</code>为sha3哈希保留了内存中的前64个字节。不管合约是否需要，这个都会存在的。</li>
+<li>最下面的<code>auxdata</code>用来验证发布的源码与部署的字节码是否相同的。这个是可选择的，但是嵌入到了编译器中。</li>
+</ul>
+<p>将剩下的汇编代码分成两个部分，这样容易分析一点：</p>
+<ul>
+<li>匹配选择器并跳掉方法处</li>
+<li>加载参数、执行方法，并从方法返回</li>
+</ul>
+<p>首先，匹配选择器的注释汇编代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">// 加载前4个字节作为方法选择器</span><br><span class="line">and(div(calldataload(0x0), 0x100000000000000000000000000000000000000000000000000000000), 0xffffffff)</span><br><span class="line">//  如果选择器匹配`0xee919d50`, 跳转到 setA</span><br><span class="line">0xee919d50</span><br><span class="line">dup2</span><br><span class="line">eq</span><br><span class="line">tag_2</span><br><span class="line">jumpi</span><br><span class="line">// 匹配失败，返回并还原</span><br><span class="line">tag_1:</span><br><span class="line">  0x0</span><br><span class="line">  dup1</span><br><span class="line">  revert</span><br><span class="line">// setA函数</span><br><span class="line">tag_2:</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure></p>
+<p>除了开始从调用数据里面加载4字节时的位转移，其他的都是非常清晰明朗的。为了清晰可见，给出了汇编逻辑的低级伪代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">methodSelector = calldata[0:4]</span><br><span class="line">if methodSelector == &quot;0xee919d50&quot;:</span><br><span class="line">  goto tag_2 // 跳转到setA</span><br><span class="line">else:</span><br><span class="line">  // 匹配失败，返回并还原</span><br><span class="line">  revert</span><br></pre></td></tr></table></figure></p>
+<p>实际方法调用的注释汇编代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">// setA</span><br><span class="line">tag_2:</span><br><span class="line">  // 方法调用之后跳转的地方</span><br><span class="line">  tag_3</span><br><span class="line">  // 加载第一个参数(数值0x1).</span><br><span class="line">  calldataload(0x4)</span><br><span class="line">  // 执行方法</span><br><span class="line">  jump(tag_4)</span><br><span class="line">tag_4:</span><br><span class="line">  // sstore(0x0, 0x1)</span><br><span class="line">  0x0</span><br><span class="line">  dup2</span><br><span class="line">  swap1</span><br><span class="line">  sstore</span><br><span class="line">tag_5:</span><br><span class="line">  pop</span><br><span class="line">  //程序的结尾，将会跳转到 tag_3并停止</span><br><span class="line">  jump</span><br><span class="line">tag_3:</span><br><span class="line">  // 程序结尾</span><br><span class="line">  stop</span><br></pre></td></tr></table></figure></p>
+<p>在进入方法体之前，汇编代码做了两件事情：</p>
+<ol>
+<li>保存了一个位置，方法调用之后返回此位置</li>
+<li>从调用数据里面加载参数到栈中</li>
+</ol>
+<p>低级的伪代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 保存位置，方法调用结束后返回此位置</span><br><span class="line">@returnTo = tag_3</span><br><span class="line">tag_2: // setA</span><br><span class="line">  // 从调用数据里面加载参数到栈中</span><br><span class="line">  @arg1 = calldata[4:4+32]</span><br><span class="line">tag_4: // a = _a</span><br><span class="line">  sstore(0x0, @arg1)</span><br><span class="line">tag_5 // 返回</span><br><span class="line">  jump(@returnTo)</span><br><span class="line">tag_3:</span><br><span class="line">  stop</span><br></pre></td></tr></table></figure></p>
+<p>将这两部分组合起来：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">methodSelector = calldata[0:4]</span><br><span class="line">if methodSelector == &quot;0xee919d50&quot;:</span><br><span class="line">  goto tag_2 // goto setA</span><br><span class="line">else:</span><br><span class="line">  // 无匹配方法。失败</span><br><span class="line">  revert</span><br><span class="line">@returnTo = tag_3</span><br><span class="line">tag_2: // setA(uint256 _a)</span><br><span class="line">  @arg1 = calldata[4:36]</span><br><span class="line">tag_4: // a = _a</span><br><span class="line">  sstore(0x0, @arg1)</span><br><span class="line">tag_5 // 返回</span><br><span class="line">  jump(@returnTo)</span><br><span class="line">tag_3:</span><br><span class="line">  stop</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>有趣的小细节：<code>revert</code>的操作码是<code>fd</code>。但是在黄皮书中你不会找到它的详细说明，或者在代码中找到它的实现。实际上，<code>fd</code>不是确实存在的！这是个无效的操作。当EVM遇到了一个无效的操作，它会放弃并且会有还原状态的副作用。</p>
+</blockquote>
+<h2 id="处理多个方法"><a href="#处理多个方法" class="headerlink" title="处理多个方法"></a>处理多个方法</h2><p>Solidity编译器是如何为有多个方法的合约产生汇编代码的？<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">    uint256 a;</span><br><span class="line">    uint256 b;</span><br><span class="line">    function setA(uint256 _a) &#123;</span><br><span class="line">      a = _a;</span><br><span class="line">    &#125;</span><br><span class="line">    function setB(uint256 _b) &#123;</span><br><span class="line">      b = _b;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>简单，只要一些<code>if-else</code>分支就可以了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">// methodSelector = calldata[0:4]</span><br><span class="line">and(div(calldataload(0x0), 0x100000000000000000000000000000000000000000000000000000000), 0xffffffff)</span><br><span class="line">// if methodSelector == 0x9cdcf9b</span><br><span class="line">0x9cdcf9b</span><br><span class="line">dup2</span><br><span class="line">eq</span><br><span class="line">tag_2 // SetB</span><br><span class="line">jumpi</span><br><span class="line">// elsif methodSelector == 0xee919d50</span><br><span class="line">dup1</span><br><span class="line">0xee919d50</span><br><span class="line">eq</span><br><span class="line">tag_3 // SetA</span><br><span class="line">jumpi</span><br></pre></td></tr></table></figure></p>
+<p>伪代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">methodSelector = calldata[0:4]</span><br><span class="line">if methodSelector == &quot;0x9cdcf9b&quot;:</span><br><span class="line">  goto tag_2</span><br><span class="line">elsif methodSelector == &quot;0xee919d50&quot;:</span><br><span class="line">  goto tag_3</span><br><span class="line">else:</span><br><span class="line">  // Cannot find a matching method. Fail.</span><br><span class="line">  revert</span><br></pre></td></tr></table></figure></p>
+<h3 id="ABI为复杂方法调用进行编码"><a href="#ABI为复杂方法调用进行编码" class="headerlink" title="ABI为复杂方法调用进行编码"></a>ABI为复杂方法调用进行编码</h3><p><img src="/asset/evmp4_zero.jpeg" alt="不用担心零,这些零都没关系"></p>
+<p>对于一个方法调用，交易输入数据的前4个字节总是方法选择器。跟在后面的32字节块就是方法参数。 <a href="https://github.com/ethereum/wiki/wiki/Ethereum-Contract-ABI">ABI编码规范</a>显示了更加复杂的参数类型是如何被编码的，但是阅读起来非常的痛苦。</p>
+<p>另一个学习ABI编码的方式是使用 <a href="https://github.com/ethereum/pyethereum/blob/4e945e2a24554ec04eccb160cff689a82eed7e0d/ethereum/abi.py">pyethereum的ABI编码函数</a> 来研究不同数据类型是如何编码的。我们会从简单的例子开始，然后建立更复杂的类型。</p>
+<p>首先，导出<code>encode_abi</code>函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">from ethereum.abi import encode_abi</span><br></pre></td></tr></table></figure></p>
+<p>对于一个有3个<code>uint256</code>类型参数的方法（例如<code>foo(uint256 a, uint256 b, uint256 c)</code>），编码参数只是简单的依次对<code>uint256</code>数值进行编码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 第一个数组列出了参数的类型</span><br><span class="line"># 第二个数组列出了参数的值</span><br><span class="line">&gt; encode_abi([&quot;uint256&quot;, &quot;uint256&quot;, &quot;uint256&quot;],[1, 2, 3]).hex()</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000001</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000002</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br></pre></td></tr></table></figure></p>
+<p>小于32字节的类型会被填充到32字节：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; encode_abi([&quot;int8&quot;, &quot;uint32&quot;, &quot;uint64&quot;],[1, 2, 3]).hex()</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000001</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000002</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br></pre></td></tr></table></figure></p>
+<p>对于定长数组，元素还是32字节的块（如果必要的话会填充0），依次排列：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&gt; encode_abi(</span><br><span class="line">   [&quot;int8[3]&quot;, &quot;int256[3]&quot;],</span><br><span class="line">   [[1, 2, 3], [4, 5, 6]]</span><br><span class="line">).hex()</span><br><span class="line">// int8[3]. Zero-padded to 32 bytes.</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000001</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000002</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">// int256[3].</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000004</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000005</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000006</span><br></pre></td></tr></table></figure></p>
+<h3 id="ABI为动态数组编码"><a href="#ABI为动态数组编码" class="headerlink" title="ABI为动态数组编码"></a>ABI为动态数组编码</h3><p>ABI介绍了一种间接的编码动态数组的方法，遵循一个叫做<a href="https://github.com/ethereum/pyethereum/blob/4e945e2a24554ec04eccb160cff689a82eed7e0d/ethereum/abi.py#L735-L741">头尾编码</a>的模式。</p>
+<p>该模式其实就是动态数组的元素被打包到交易的调用数据尾部，参数(“头”)会被引用到调用数据里，这里就是数组元素。</p>
+<p>如果我们调用的方法有3个动态数组，参数的编码就会像这样（添加注释和换行为了更加的清晰）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&gt; encode_abi(</span><br><span class="line">  [&quot;uint256[]&quot;, &quot;uint256[]&quot;, &quot;uint256[]&quot;],</span><br><span class="line">  [[0xa1, 0xa2, 0xa3], [0xb1, 0xb2, 0xb3], [0xc1, 0xc2, 0xc3]]</span><br><span class="line">).hex()</span><br><span class="line">/************* HEAD (32*3 bytes) *************/</span><br><span class="line">// 参数1: 数组数据在0x60位置</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000060</span><br><span class="line">// 参数2：数组数据在0xe0位置</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000e0</span><br><span class="line">// 参数3： 数组数据在0x160位置 </span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000160</span><br><span class="line">/************* TAIL (128**3 bytes) *************/</span><br><span class="line">//  0x60位置。参数1的数据</span><br><span class="line">// 长度后跟这元素</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a3</span><br><span class="line">// 0xe0位置。参数2的数据</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b3</span><br><span class="line">//0x160位置。参数3的数据</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000c1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000c2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000c3</span><br></pre></td></tr></table></figure></p>
+<p><code>HEAD</code>部分有32字节参数，指出<code>TAIL</code>部分的位置，<code>TAIL</code>部分包含了3个动态数组的实际数据。</p>
+<p>举个例子，第一个参数是<code>0x60</code>，指出调用数据的第96个(<code>0x60</code>)字节。如果你看一下第96个字节，它是数组的开始地方。前32字节是长度，后面跟着的是3个元素。</p>
+<p>混合动态和静态参数是可能的。这里有个(<code>static</code>，<code>dynamic</code>，<code>static</code>)参数。静态参数按原样编码，而第二个动态数组的数据放到了尾部：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&gt; encode_abi(</span><br><span class="line">  [&quot;uint256&quot;, &quot;uint256[]&quot;, &quot;uint256&quot;],</span><br><span class="line">  [0xaaaa, [0xb1, 0xb2, 0xb3], 0xbbbb]</span><br><span class="line">).hex()</span><br><span class="line">/************* HEAD (32*3 bytes) *************/</span><br><span class="line">// 参数1： 0xaaaa</span><br><span class="line">000000000000000000000000000000000000000000000000000000000000aaaa</span><br><span class="line">// 参数2：数组数据在0x60位置</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000060</span><br><span class="line">// 参数3： 0xbbbb</span><br><span class="line">000000000000000000000000000000000000000000000000000000000000bbbb</span><br><span class="line">/************* TAIL (128 bytes) *************/</span><br><span class="line">// 0x60位置。参数2的数据</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b3</span><br></pre></td></tr></table></figure></p>
+<p>有很多的0，不过没关系。</p>
+<h2 id="编码字节数组"><a href="#编码字节数组" class="headerlink" title="编码字节数组"></a>编码字节数组</h2><p>字符串和字节数组同样是头尾编码。唯一的区别是字节数组会被紧密的打包成一个32字节的块，就像：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&gt; encode_abi(</span><br><span class="line">  [&quot;string&quot;, &quot;string&quot;, &quot;string&quot;],</span><br><span class="line">  [&quot;aaaa&quot;, &quot;bbbb&quot;, &quot;cccc&quot;]</span><br><span class="line">).hex()</span><br><span class="line">// 参数1： 字符串数据在0x60位置</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000060</span><br><span class="line">// 参数2：字符串数据在0xa0位置</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a0</span><br><span class="line">// 参数3：字符串数据在0xe0位置</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000e0</span><br><span class="line">// 0x60 (96)。 参数1的数据</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000004</span><br><span class="line">6161616100000000000000000000000000000000000000000000000000000000</span><br><span class="line">// 0xa0 (160)。参数2的数据</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000004</span><br><span class="line">6262626200000000000000000000000000000000000000000000000000000000</span><br><span class="line">// 0xe0 (224)。参数3的数据</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000004</span><br><span class="line">6363636300000000000000000000000000000000000000000000000000000000</span><br></pre></td></tr></table></figure></p>
+<p>对于每个字符串/字节数组，前面的32字节是编码长度，后面跟着才是字符串/字节数组的内容。</p>
+<p>如果字符串大于32字节，那么多个32字节块就会被使用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 编码字符串的48字节</span><br><span class="line">ethereum.abi.encode_abi(</span><br><span class="line">  [&quot;string&quot;],</span><br><span class="line">  [&quot;a&quot; * (32+16)]</span><br><span class="line">).hex()</span><br><span class="line"></span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000020</span><br><span class="line">//字符串的长度为0x30 (48)</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000030</span><br><span class="line">6161616161616161616161616161616161616161616161616161616161616161</span><br><span class="line">6161616161616161616161616161616100000000000000000000000000000000</span><br></pre></td></tr></table></figure></p>
+<h2 id="嵌套数组"><a href="#嵌套数组" class="headerlink" title="嵌套数组"></a>嵌套数组</h2><p>嵌套数组中每个嵌套有一个间接寻址。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">&gt; encode_abi(</span><br><span class="line">  [&quot;uint256[][]&quot;],</span><br><span class="line">  [[[0xa1, 0xa2, 0xa3], [0xb1, 0xb2, 0xb3], [0xc1, 0xc2, 0xc3]]]</span><br><span class="line">).hex()</span><br><span class="line">//参数1：外层数组在0x20位置上</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000020</span><br><span class="line">// 0x20。每个元素都是里层数组的位置</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000060</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000e0</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000160</span><br><span class="line">// array[0]在0x60位置上</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000a3</span><br><span class="line">// array[1] 在0xe0位置上</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000b3</span><br><span class="line">// array[2]在0x160位置上</span><br><span class="line">0000000000000000000000000000000000000000000000000000000000000003</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000c1</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000c2</span><br><span class="line">00000000000000000000000000000000000000000000000000000000000000c3</span><br></pre></td></tr></table></figure></p>
+<p>很多的0！</p>
+<h2 id="Gas成本和ABI编码设计"><a href="#Gas成本和ABI编码设计" class="headerlink" title="Gas成本和ABI编码设计"></a>Gas成本和ABI编码设计</h2><p>为什么ABI将方法选择器截断到4个字节？如果我们不使用sha256的整个32字节，会不会不幸的碰到不同方法发生冲突的情况？ 如果这个截断是为了节省成本，那么为什么在用更多的0来进行填充时，而仅仅只为了节省方法选择器中的28字节而截断呢？</p>
+<p>这种设计看起来互相矛盾……直到我们考虑到一个交易的gas成本。</p>
+<ul>
+<li>每笔交易需要支付 21000 gas</li>
+<li>每笔交易的0字节或代码需要支付 4 gas</li>
+<li>每笔交易的非0字节或代码需要支付 68 gas</li>
+</ul>
+<p>啊哈！0要便宜17倍，0填充现在看起来没有那么不合理了。</p>
+<p>方法选择器是一个加密哈希值，是个伪随机。一个随机的字符串倾向于拥有很多的非0字节，因为每个字节只有0.3%（1/255）的概率是0。</p>
+<ul>
+<li><code>0x1</code>填充到32字节成本是192 gas<br>4*31 (0字节) + 68 (1个非0字节)</li>
+<li>sha256可能有32个非0字节，成本大概2176 gas<br>32 * 68</li>
+<li>sha256截断到4字节，成本大概272 gas<br>32*4</li>
+</ul>
+<p>ABI展示了另外一个底层设计的奇特例子，通过gas成本结构进行激励。</p>
+<h3 id="负整数…"><a href="#负整数…" class="headerlink" title="负整数…."></a>负整数….</h3><p>一般使用叫做 <a href="https://en.wikipedia.org/wiki/Two%27s_complement">补码</a>的方式来表达负整数。<code>int8</code>类型<code>-1</code>的数值编码会都是1。<code>1111 1111</code>。</p>
+<p>ABI用1来填充负整数，所以<code>-1</code>会被填充为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</span><br></pre></td></tr></table></figure></p>
+<p>越大的负整数（<code>-1</code>大于<code>-2</code>）1越多，会花费相当多的gas。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>与智能合约交互，你需要发送原始字节。它会进行一些计算，可能会改变自己的状态，然后会返回给你原始字节。方法调用实际上不存在，这是ABI创造的集体假象。</p>
+<p>ABI被指定为一个低级格式，但是在功能上更像一个跨语言RPC框架的序列化格式。</p>
+<p> 我们可以在DApp和Web App的架构层面之间进行类比：</p>
+<ul>
+<li>区块链就是一个备份数据库</li>
+<li>合约就像web服务器</li>
+<li>交易就像请求</li>
+<li>ABI是数据交换格式，就像<a href="https://en.wikipedia.org/wiki/Protocol_Buffers">Protocol Buffer</a>。</li>
+</ul>
+<p>本系列文章其他部分译文链接：</p>
+<ul>
+<li><a href="http://www.jianshu.com/p/1969f3761208">EVM汇编代码的介绍(第1部分)</a></li>
+<li><a href="http://www.jianshu.com/p/9df8d15418ed">固定长度数据类型的表示方法(第2部分)</a></li>
+<li><a href="http://www.jianshu.com/p/af5721c79505">动态数据类型的表示方法(第3部分)</a></li>
+<li><a href="http://www.jianshu.com/p/d9137e87c9d3">一个新合约被创建后会发生什么(第5部分)</a></li>
+</ul>
+<p>翻译作者: <a href="https://lilymoana.github.io/">许莉</a><br>原文地址：<a href="https://medium.com/@hayeah/how-to-decipher-a-smart-contract-method-call-8ee980311603">Diving Into The Ethereum VM Part Four</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/evm_part4.html">深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 XU LI 的个人博客">XU LI</a></p>
+        <p><span>发布时间:</span>2017年10月30日 - 15时35分</p>
+        <p><span>最后更新:</span>2017年11月22日 - 13时25分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/evm_part4.html" title="深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式">https://lilymoana.github.io/evm_part4.html</a>
+            <span class="copy-path" data-clipboard-text="原文: https://lilymoana.github.io/evm_part4.html　　作者: XU LI" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/evm_part3.html" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          深入了解以太坊虚拟机第3部分——动态数据类型的表示方法
+        
+      </div>
+    </a>
+  
+  
+    <a  href="/evm_part5.html" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#合约交易"><span class="toc-number">1.</span> <span class="toc-text">合约交易</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#应用二进制接口（ABI）"><span class="toc-number">2.</span> <span class="toc-text">应用二进制接口（ABI）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#调用一个获取者"><span class="toc-number">3.</span> <span class="toc-text">调用一个获取者</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#外部方法调用的汇编"><span class="toc-number">4.</span> <span class="toc-text">外部方法调用的汇编</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#处理多个方法"><span class="toc-number">5.</span> <span class="toc-text">处理多个方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ABI为复杂方法调用进行编码"><span class="toc-number">5.1.</span> <span class="toc-text">ABI为复杂方法调用进行编码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ABI为动态数组编码"><span class="toc-number">5.2.</span> <span class="toc-text">ABI为动态数组编码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#编码字节数组"><span class="toc-number">6.</span> <span class="toc-text">编码字节数组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#嵌套数组"><span class="toc-number">7.</span> <span class="toc-text">嵌套数组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Gas成本和ABI编码设计"><span class="toc-number">8.</span> <span class="toc-text">Gas成本和ABI编码设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#负整数…"><span class="toc-number">8.1.</span> <span class="toc-text">负整数….</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">9.</span> <span class="toc-text">总结</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="hide it"  title="click the button to show or hide catalogs of this article">
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "hide it";
+    var valueShow = "show it";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/evm_part3.html" title="上一篇: 深入了解以太坊虚拟机第3部分——动态数据类型的表示方法">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/evm_part5.html" title="下一篇: 深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/ConsensusCompare.html">共识算法的比较：Casper vs Tendermint</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part1.html">深入了解以太坊虚拟机</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part2.html">深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part3.html">深入了解以太坊虚拟机第3部分——动态数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part4.html">深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part5.html">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</a></li><li class="post-list-item"><a class="post-list-link" href="/ethereum_theory.html">以太坊的工作原理</a></li><li class="post-list-item"><a class="post-list-link" href="/SPV.html">简易支付验证能支持数十亿的比特币用户吗？</a></li><li class="post-list-item"><a class="post-list-link" href="/Eng_C-ABCI.html">C Language Implemented Tendermint ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/Chi_C-ABCI.html">C语言实现的ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/DPOS.html">DPOS共识算法—缺失的白皮书</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2017 XU LI
+            </div>
+            <div class="footer-right">
+                <a href="https://hexo.io/" target="_blank">Hexo</a><a href="https://github.com/lilymoana" target="_blank">Blog</a> by XuLi
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 4;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>C Language Implemented Tendermint ABCI | Lily&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="This article is about a C-ABCI program I implemented.">
+<meta name="keywords" content="blockchain,c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C Language Implemented Tendermint ABCI">
+<meta property="og:url" content="https://lilymoana.github.io/Eng_C-ABCI.html">
+<meta property="og:site_name" content="Lily&#39;s Blog">
+<meta property="og:description" content="This article is about a C-ABCI program I implemented.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://lilymoana.github.io/asset/cabci_make.png">
+<meta property="og:updated_time" content="2017-11-22T05:25:28.822Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C Language Implemented Tendermint ABCI">
+<meta name="twitter:description" content="This article is about a C-ABCI program I implemented.">
+<meta name="twitter:image" content="https://lilymoana.github.io/asset/cabci_make.png">
+  
+    <link rel="alternative" href="/atom.xml" title="Lily&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.jpg" class="js-avatar" src="/img/avatar.jpg">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">XU LI</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">Winter is coming !</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder=" Search...">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Links</li>
+                        
+                        
+                        <li>Motto</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">分类阅读</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                            
+                                <a class="fl twitter"  target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                            
+                                <a class="fl wechat"  target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Consensus/" style="font-size: 10px;">Consensus</a> <a href="/tags/bitcoin/" style="font-size: 10px;">bitcoin</a> <a href="/tags/blockchain/" style="font-size: 20px;">blockchain</a> <a href="/tags/c/" style="font-size: 13.33px;">c</a> <a href="/tags/consensus/" style="font-size: 10px;">consensus</a> <a href="/tags/ethereum/" style="font-size: 16.67px;">ethereum</a>
+                    </div>
+                </section>
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="https://gguoss.github.io/">blog</a>
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="http://www.jianshu.com/u/efa3e72bbb80">简书</a>
+                    
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-motto">The meaning of life is to give life a meaning !</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">XU LI</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.jpg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">XU LI</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">Winter is coming !</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">分类阅读</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                    
+                        <a class="twitter" target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                    
+                        <a class="wechat" target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-Eng_C-ABCI" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/Eng_C-ABCI.html" class="article-date">
+      <time datetime="2017-09-26T03:53:12.000Z" itemprop="datePublished">2017-09-26</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      C Language Implemented Tendermint ABCI
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/original/">original</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/blockchain/">blockchain</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/c/">c</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p><strong>  </strong>  <Excerpt in index | Homepage Digest><br>This article is about a C-ABCI program I implemented.</p>
+<a id="more"></a>
+<The rest of contents | Rest of all>
+
+<p>Original Author: <a href="https://lilymoana.github.io/">XU LI</a><br>Chinese Version: <a href="https://lilymoana.github.io/Chi_C-ABCI.html">C-ABCI</a></p>
+<h2 id="Brief-Introduction"><a href="#Brief-Introduction" class="headerlink" title="Brief Introduction"></a>Brief Introduction</h2><p>This article will focus on the implementation of <strong>C-ABCI</strong> which means use <strong>C language</strong> to implement <strong>Tendermint ABCI</strong> ! First of all,let’s brief introduce <strong>Tendermint</strong> and <strong>ABCI</strong>:</p>
+<p><strong>Temdermint’s</strong> core is consensus engine, it would be responsible for:</p>
+<ul>
+<li>Sharing blocks and transactions between nodes</li>
+<li>Establishing a canonical/immutable order of transactions (the blockchain)</li>
+</ul>
+<p><strong>ABCI(Application BlockChain Interfac)</strong> is interface between <strong>Tendermint</strong> and <strong>Application</strong>, which means <strong>Application</strong> will use <strong>ABCI</strong> to communicate with <strong>Tendermint</strong>. It can be implemented with any language, so far it’s  been implemented with <a href="https://github.com/mdyring/cpp-tmsp">C++</a> and <a href="https://github.com/tendermint/js-abci">JavaScript</a>, <a href="https://github.com/jTendermint/jabci">Java</a>, <a href="https://github.com/KrzysiekJ/abci_server">Erlang</a>. But not include <strong>C language</strong>, so I took the chance, use <strong>C language</strong> implemented  <strong>C-ABCI</strong>.</p>
+<p>Learn more about <strong>Tendermint</strong>: <a href="https://tendermint.com/intro">Tendermint Intro</a><br>Learn more about <strong>ABCI</strong> : <a href="https://tendermint.com/intro/abci-overview">ABCI Overview</a><br>Source code of <strong>C-ABCI</strong> : <a href="https://github.com/chainx-org/c-abci">chainx-org/c-abci</a></p>
+<h2 id="How-to-run-C-ABCI-demo"><a href="#How-to-run-C-ABCI-demo" class="headerlink" title="How to run C-ABCI demo?"></a>How to run C-ABCI demo?</h2><p>This is pretty easy part, there’s only five step to run a <strong>C-ABCI</strong> demo, do as the following:</p>
+<h3 id="Step-1-Install-Tendermint"><a href="#Step-1-Install-Tendermint" class="headerlink" title="Step 1:  Install Tendermint"></a>Step 1:  Install Tendermint</h3><p>Install <strong>Tendermint</strong> into your computer, here is the guide of <a href="https://tendermint.com/docs/guides/install-from-source">Installation of Tendermint</a></p>
+<h3 id="Step-2-Clone-code"><a href="#Step-2-Clone-code" class="headerlink" title="Step 2: Clone code"></a>Step 2: Clone code</h3><p>Clone the <strong>C-ABCI</strong> source code to your computer:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/chainx-org/c-abci.git   ~/work/c/c-abci</span><br></pre></td></tr></table></figure></p>
+<p>This is where I keep <strong>C-ABCI</strong> source code, you can chose your own path to keep it.</p>
+<h3 id="Step-3-Compile-code"><a href="#Step-3-Compile-code" class="headerlink" title="Step 3: Compile code"></a>Step 3: Compile code</h3><p> Enter into <strong>c-abci</strong>  directory and compile  the <strong>C-ABCI</strong>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~/work/c/c-abci</span><br><span class="line">make</span><br></pre></td></tr></table></figure></p>
+<p>when you successfully compile the <strong>C-ABCI</strong>, you will see the terminal output like this:<br><img src="/asset/cabci_make.png" alt=""></p>
+<p>And in the <strong>c-abci/bin</strong> directory you will see the <strong>c-dummy</strong> binary file, it can be executed !</p>
+<h3 id="Step-4-Run-test-program"><a href="#Step-4-Run-test-program" class="headerlink" title="Step 4: Run test program"></a>Step 4: Run test program</h3><p>Enter  into <strong>c-abci/bin</strong> directory and run <strong>c-dummy</strong> program:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd  bin/</span><br><span class="line">./c-dummy</span><br></pre></td></tr></table></figure></p>
+<h3 id="Step-5-Run-Tendermint"><a href="#Step-5-Run-Tendermint" class="headerlink" title="Step 5: Run Tendermint"></a>Step 5: Run Tendermint</h3><p>Run <strong>Tendermint</strong> program:</p>
+<p>If it is your first time run <strong>Tendermint</strong> in your computer,  execute command:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tendermint init</span><br><span class="line">tendermint node</span><br></pre></td></tr></table></figure></p>
+<p>If you have already run <strong>Tendermint</strong> in your computer , then execute command:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tendermint unsafe_reset_all</span><br><span class="line">tendermint node</span><br></pre></td></tr></table></figure></p>
+<p>This is whole procedure of <strong>How to run C-ABCI demo</strong>. Here is the video of runing C-ABCI:</p>
+<iframe width="1000" height="500" src="https://www.youtube.com/embed/p8CSvTyvOOI" frameborder="0" allowfullscreen></iframe>
+
+
+<h2 id="C-ABCI-code-framework"><a href="#C-ABCI-code-framework" class="headerlink" title="C-ABCI code framework"></a>C-ABCI code framework</h2><p><strong>Tendermint</strong> provides two methods  to communicate with,  that’s  <strong>GRPC</strong> and <strong>TSP</strong> ! <strong>C-ABCI</strong> chose the latter, it use <strong>TCP</strong> protocol to implement communication module.  Tendermint keep three connections: Mempool Connection, Consensus Connection, Query Connection. <a href="https://tendermint.com/docs/guides/app-development">Connections Introduction</a>. In <strong>C-ABCI’s</strong> implementation each connection has it’s own process to dispose the connection’s request,  maybe latter on I will implement another version which use separated threads to dispose each connection.</p>
+<p>As we said before, ABCI is a interface, in <strong>C language</strong> term it means that  <strong>C-ABCI</strong> is a library which  provides three interfaces.  <strong>Application</strong> can use <strong>C-ABCI</strong> library to communicate with <strong>Tendermint</strong>. <strong>C-ABCI</strong> doesn’t interested in the data which <strong>Application</strong> and <strong>Tendermint</strong> communicate with, it’s just a transmitter. Data transmission between <strong>Tendermint</strong> and <strong>C-ABCI</strong> is relay on <strong>TCP Socket</strong>, but <strong>C-ABCI</strong> and <strong>Application</strong> data transmission use callback function to achieve!</p>
+<p>Processing flow among <strong>Tendermint</strong>, <strong>Application</strong>, <strong>C-ABCI</strong>:</p>
+<ol>
+<li><strong>Tendermint</strong> send a request to <strong>C-ABCI</strong></li>
+<li><strong>C-ABCI</strong> receive the request and parse request data, then pass the data to the callback function which is <strong>Application</strong> implemented</li>
+<li>The callback function according to request type to act different with the data, and pass the result to <strong>C-ABCI</strong> via callback function return value</li>
+<li><strong>C-ABCI</strong> pack the returned value and send it to <strong>Tendermint</strong></li>
+</ol>
+<p>In <strong>C-ABCI</strong> source code, there have been seven directories , each directory represent a individual modular except <strong>include</strong> directory. The sheet below describes each directory:</p>
+<table>
+<thead>
+<tr>
+<th>directory</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>include</td>
+<td>Include all modular head files</td>
+</tr>
+<tr>
+<td>socket</td>
+<td>Communication modular which implemented communication of network based on TCP Socket</td>
+</tr>
+<tr>
+<td>encoding</td>
+<td>Character conversion modular which implemented conversion between <strong>unsigned char</strong> and <strong>unsigned integer</strong> of big endian and little endian </td>
+</tr>
+<tr>
+<td>dlist</td>
+<td>Data storage modular which use <strong>Circular Doubly Linked List</strong> to store data</td>
+</tr>
+<tr>
+<td>type</td>
+<td>Data type modular which dispose <strong>Tendermint</strong> data type, produce from <strong>Tendermint</strong> type.proto file with <strong>protobuf-c</strong> software</td>
+</tr>
+<tr>
+<td>core</td>
+<td><strong>C-ABCI</strong> core modular which provides three interface to <strong>Application</strong></td>
+</tr>
+<tr>
+<td>demo</td>
+<td><strong>C-ABCI</strong> demo which is very simple <strong>Application</strong> for show you how to use <strong>C-ABCI</strong> library</td>
+</tr>
+</tbody>
+</table>
+<h2 id="How-to-build-a-Application-on-top-of-C-ABCI"><a href="#How-to-build-a-Application-on-top-of-C-ABCI" class="headerlink" title="How to build a Application on top of C-ABCI?"></a>How to build a Application on top of C-ABCI?</h2><p>Even though <strong>C-ABCI</strong> have seven directories,  there only have two directories you have to study:</p>
+<ul>
+<li>core : use this modular to code <strong>Application’s</strong> framework</li>
+<li>type : use this modular to <strong>malloc data struct</strong> and <strong>free data struct</strong></li>
+</ul>
+<p>I have already implemented a very simple application called <strong>c-dummy</strong> in <strong>c-abci/demo</strong> directory, you can draw lessons from it.</p>
+<p><strong>C-ABCI</strong> is very easy to start on, it provides only three interfaces which is all you need to code a <strong>Application</strong> framework! </p>
+<p>The three interfaces is:</p>
+<h3 id="Initialize-C-ABCI-serve"><a href="#Initialize-C-ABCI-serve" class="headerlink" title="Initialize C-ABCI serve"></a>Initialize <strong>C-ABCI</strong> serve</h3><p>Bind and listen the provided IP address and port.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int server_init(const char *ipaddr, const char *port);</span><br></pre></td></tr></table></figure></p>
+<h3 id="Start-C-ABCI-serve"><a href="#Start-C-ABCI-serve" class="headerlink" title="Start C-ABCI serve"></a>Start <strong>C-ABCI</strong> serve</h3><p>It will not return until some error occurred. <strong>app</strong> is callback function which need <strong>Application</strong> to implemented.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int server_start(Application app)</span><br></pre></td></tr></table></figure></p>
+<h3 id="Stop-C-ABCI-server"><a href="#Stop-C-ABCI-server" class="headerlink" title="Stop C-ABCI server"></a>Stop <strong>C-ABCI</strong> server</h3><p>Close listened socket.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void server_stop();</span><br></pre></td></tr></table></figure></p>
+<p>You just need write this three functions in your <strong>Application’s main function</strong> then the code framework of your <strong>Application</strong> is completed (see <strong>main function</strong> in <code>main.c</code> file of <strong>c-abci/demo/</strong> directory) !</p>
+<p>Rest of the work is to implement callback function which you provide to <strong>server_start</strong> function. It should look like this:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">void *ABCIApplication(Types__Request *request)</span><br><span class="line">&#123;</span><br><span class="line">    switch( request-&gt;value_case )</span><br><span class="line">    &#123;</span><br><span class="line">        case TYPES__REQUEST__VALUE_INFO:</span><br><span class="line">            return Info();</span><br><span class="line">        case TYPES__REQUEST__VALUE_SET_OPTION:</span><br><span class="line">            return SetOption(request-&gt;set_option);</span><br><span class="line">        case TYPES__REQUEST__VALUE_DELIVER_TX:</span><br><span class="line">            return DeliverTx(request-&gt;deliver_tx);</span><br><span class="line">        case TYPES__REQUEST__VALUE_CHECK_TX:</span><br><span class="line">            return CheckTx(request-&gt;check_tx);</span><br><span class="line">        case TYPES__REQUEST__VALUE_COMMIT:</span><br><span class="line">            return  Commit();</span><br><span class="line">        case TYPES__REQUEST__VALUE_QUERY:</span><br><span class="line">            return Query(request-&gt;query);</span><br><span class="line">        case TYPES__REQUEST__VALUE_INIT_CHAIN:</span><br><span class="line">            return InitChain(request-&gt;init_chain);</span><br><span class="line">        case TYPES__REQUEST__VALUE_BEGIN_BLOCK:</span><br><span class="line">            return BeginBlock(request-&gt;begin_block);</span><br><span class="line">        case TYPES__REQUEST__VALUE_END_BLOCK:</span><br><span class="line">            return EndBlock(request-&gt;end_block);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>You can find this code in <code>c-abci/demo/dummy.c</code> file. The  parameter of <strong>request</strong> passed by <strong>C-ABCI</strong>, which is received from <strong>Tendermint</strong>.</p>
+<p>You can see in this callback function each <strong>request type</strong> has it’s own function to dispose <strong>request</strong>. This is most important part of your <strong>Application code</strong>, you need  implement functions of each <strong>request type</strong>, these functions are your <strong>Application’s business logic</strong> . And when you finished these functions, your <strong>Application’s code</strong> is completed!<br>In <strong>c-abci/demo/</strong> directory just implemented a few  functions of some <strong>request type</strong>, and it’s very simple <strong>business logic</strong> which just store data or query them.  It use <strong>dlist modular</strong> to store data. You can choose your own method to store data, such as <strong>tree</strong>, <strong>database</strong>.</p>
+<p>Problem’s Solution:<a href="https://github.com/chainx-org/c-abci/wiki/%E7%BC%96%E8%AF%91%E8%BF%90%E8%A1%8C%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98">C-ABCI’s problems during compiling</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/Eng_C-ABCI.html">C Language Implemented Tendermint ABCI</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 XU LI 的个人博客">XU LI</a></p>
+        <p><span>发布时间:</span>2017年09月26日 - 11时53分</p>
+        <p><span>最后更新:</span>2017年11月22日 - 13时25分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/Eng_C-ABCI.html" title="C Language Implemented Tendermint ABCI">https://lilymoana.github.io/Eng_C-ABCI.html</a>
+            <span class="copy-path" data-clipboard-text="原文: https://lilymoana.github.io/Eng_C-ABCI.html　　作者: XU LI" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/SPV.html" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          简易支付验证能支持数十亿的比特币用户吗？
+        
+      </div>
+    </a>
+  
+  
+    <a  href="/Chi_C-ABCI.html" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">C语言实现的ABCI</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Brief-Introduction"><span class="toc-number">1.</span> <span class="toc-text">Brief Introduction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How-to-run-C-ABCI-demo"><span class="toc-number">2.</span> <span class="toc-text">How to run C-ABCI demo?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-1-Install-Tendermint"><span class="toc-number">2.1.</span> <span class="toc-text">Step 1:  Install Tendermint</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-2-Clone-code"><span class="toc-number">2.2.</span> <span class="toc-text">Step 2: Clone code</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-3-Compile-code"><span class="toc-number">2.3.</span> <span class="toc-text">Step 3: Compile code</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-4-Run-test-program"><span class="toc-number">2.4.</span> <span class="toc-text">Step 4: Run test program</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-5-Run-Tendermint"><span class="toc-number">2.5.</span> <span class="toc-text">Step 5: Run Tendermint</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-ABCI-code-framework"><span class="toc-number">3.</span> <span class="toc-text">C-ABCI code framework</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How-to-build-a-Application-on-top-of-C-ABCI"><span class="toc-number">4.</span> <span class="toc-text">How to build a Application on top of C-ABCI?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Initialize-C-ABCI-serve"><span class="toc-number">4.1.</span> <span class="toc-text">Initialize C-ABCI serve</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Start-C-ABCI-serve"><span class="toc-number">4.2.</span> <span class="toc-text">Start C-ABCI serve</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Stop-C-ABCI-server"><span class="toc-number">4.3.</span> <span class="toc-text">Stop C-ABCI server</span></a></li></ol></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="hide it"  title="click the button to show or hide catalogs of this article">
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "hide it";
+    var valueShow = "show it";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/SPV.html" title="上一篇: 简易支付验证能支持数十亿的比特币用户吗？">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/Chi_C-ABCI.html" title="下一篇: C语言实现的ABCI">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/ConsensusCompare.html">共识算法的比较：Casper vs Tendermint</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part1.html">深入了解以太坊虚拟机</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part2.html">深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part3.html">深入了解以太坊虚拟机第3部分——动态数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part4.html">深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part5.html">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</a></li><li class="post-list-item"><a class="post-list-link" href="/ethereum_theory.html">以太坊的工作原理</a></li><li class="post-list-item"><a class="post-list-link" href="/SPV.html">简易支付验证能支持数十亿的比特币用户吗？</a></li><li class="post-list-item"><a class="post-list-link" href="/Eng_C-ABCI.html">C Language Implemented Tendermint ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/Chi_C-ABCI.html">C语言实现的ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/DPOS.html">DPOS共识算法—缺失的白皮书</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2017 XU LI
+            </div>
+            <div class="footer-right">
+                <a href="https://hexo.io/" target="_blank">Hexo</a><a href="https://github.com/lilymoana" target="_blank">Blog</a> by XuLi
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 4;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

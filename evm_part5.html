@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么 | Lily&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="深入了解以太坊虚拟机是一个系列的文章，本文是最后一篇，前部分的译文链接在本文结尾处">
+<meta name="keywords" content="blockchain,ethereum">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么">
+<meta property="og:url" content="https://lilymoana.github.io/evm_part5.html">
+<meta property="og:site_name" content="Lily&#39;s Blog">
+<meta property="og:description" content="深入了解以太坊虚拟机是一个系列的文章，本文是最后一篇，前部分的译文链接在本文结尾处">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://lilymoana.github.io/asset/evmp5_head.jpeg">
+<meta property="og:image" content="https://lilymoana.github.io/asset/evmp5_bytecode.jpeg">
+<meta property="og:image" content="https://lilymoana.github.io/asset/evmp5_address.jpeg">
+<meta property="og:updated_time" content="2017-11-22T05:25:28.822Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么">
+<meta name="twitter:description" content="深入了解以太坊虚拟机是一个系列的文章，本文是最后一篇，前部分的译文链接在本文结尾处">
+<meta name="twitter:image" content="https://lilymoana.github.io/asset/evmp5_head.jpeg">
+  
+    <link rel="alternative" href="/atom.xml" title="Lily&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.jpg" class="js-avatar" src="/img/avatar.jpg">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">XU LI</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">Winter is coming !</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder=" Search...">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Links</li>
+                        
+                        
+                        <li>Motto</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">分类阅读</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                            
+                                <a class="fl twitter"  target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                            
+                                <a class="fl wechat"  target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Consensus/" style="font-size: 10px;">Consensus</a> <a href="/tags/bitcoin/" style="font-size: 10px;">bitcoin</a> <a href="/tags/blockchain/" style="font-size: 20px;">blockchain</a> <a href="/tags/c/" style="font-size: 13.33px;">c</a> <a href="/tags/consensus/" style="font-size: 10px;">consensus</a> <a href="/tags/ethereum/" style="font-size: 16.67px;">ethereum</a>
+                    </div>
+                </section>
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="https://gguoss.github.io/">blog</a>
+                    
+                      <a target="_blank"  class="main-nav-link switch-friends-link" href="http://www.jianshu.com/u/efa3e72bbb80">简书</a>
+                    
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-motto">The meaning of life is to give life a meaning !</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">XU LI</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.jpg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">XU LI</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">Winter is coming !</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">分类阅读</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/lilymoana" title="github">github</a>
+                    
+                        <a class="twitter" target="_blank" href="https://twitter.com/xLilymoana" title="twitter">twitter</a>
+                    
+                        <a class="wechat" target="_blank" href="/wechat/wechat.html" title="wechat">wechat</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-evm_part5" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/evm_part5.html" class="article-date">
+      <time datetime="2017-10-30T07:07:34.000Z" itemprop="datePublished">2017-10-30</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/translation/">translation</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/blockchain/">blockchain</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ethereum/">ethereum</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p> <strong>  </strong>  <Excerpt in index | Homepage Digest></p>
+<p>深入了解以太坊虚拟机是一个系列的文章，本文是最后一篇，前部分的译文链接在本文结尾处</p>
+ <a id="more"></a>
+<The rest of contents | Rest of all>
+
+<p><img src="/asset/evmp5_head.jpeg" alt=""> </p>
+<p>在该系列文章的前部分，我们学了EVM汇编基础，也学了ABI编码是如何允许外部程序与合约进行通信的。在本文中，我们将会学习一个合约是如何从零创建的。</p>
+<p>本系列的相关文章（按照顺序）：</p>
+<ul>
+<li><a href="http://www.jianshu.com/p/1969f3761208">EVM汇编代码的介绍(第1部分)</a></li>
+<li><a href="http://www.jianshu.com/p/9df8d15418ed">固定长度数据类型的表示方法(第2部分)</a></li>
+<li><a href="http://www.jianshu.com/p/af5721c79505">动态数据类型的表示方法(第3部分)</a></li>
+<li><a href="http://www.jianshu.com/p/d0e8e825d41b">ABI编码外部方法调用的方式(第4部分)</a></li>
+</ul>
+<p>我们目前所见的EVM字节码都是比较清晰明朗的，就是EVM从上往下的执行指令，没有什么隐藏的魔法。合约创建的过程更有意思一些，它将数据和代码之间的界限模糊化。</p>
+<p>在学习合约是如何创建的时候，我们将会看到有时候数据就是代码，有时候代码就是数据。</p>
+<p>带上你最喜欢的魔术帽子🎩，我们来开始吧！</p>
+<h2 id="合约出生证明"><a href="#合约出生证明" class="headerlink" title="合约出生证明"></a>合约出生证明</h2><p>让我们创建一个简单（完全没用）的合约：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>编译它：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">solc --bin --asm c.sol</span><br></pre></td></tr></table></figure></p>
+<p>字节码是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">60606040523415600e57600080fd5b5b603680601c6000396000f30060606040525b600080fd00a165627a7a723058209747525da0f525f1132dde30c8276ec70c4786d4b08a798eda3c8314bf796cc30029</span><br></pre></td></tr></table></figure></p>
+<p>为了创建这个合约，我们需要先通过发送一个<a href="https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sendtransaction">eth_sendtransaction</a> RPC请求给以太坊的节点来创建一个交易。你可以使用<a href="https://remix.ethereum.org/">Remix</a>或<a href="https://metamask.io/">Metamask</a>来做这件事情。</p>
+<p>不管你使用什么开发工具，RPC调用的参数就差不多类似于：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;from&quot;: &quot;0xbd04d16f09506e80d1fd1fd8d0c79afa49bd9976&quot;,</span><br><span class="line">  &quot;to&quot;: null,</span><br><span class="line">  &quot;gas&quot;: &quot;68653&quot;, // 30400,</span><br><span class="line">  &quot;gasPrice&quot;: &quot;1&quot;, // 10000000000000</span><br><span class="line">  &quot;data&quot;: &quot;0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a723058204bf1accefb2526a5077bcdfeaeb8020162814272245a9741cc2fddd89191af1c0029&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>没有什么特殊的RPC调用或交易类型来创建一个合约。相同的交易机制也被用于其他机制：</p>
+<ul>
+<li>转移Ether到一个账户或合约</li>
+<li>调用一个带参数的合约方法</li>
+</ul>
+<p>根据你指定的参数，以太坊会以不同方式解释交易。创建一个合约，<code>to</code>地址应该为<code>null</code>（或被忽略）。</p>
+<p>我用下面这个交易创建了一个合约例子：<br><a href="https://rinkeby.etherscan.io/tx/0x58f36e779950a23591aaad9e4c3c3ac105547f942f221471bf6ffce1d40f8401">https://rinkeby.etherscan.io/tx/0x58f36e779950a23591aaad9e4c3c3ac105547f942f221471bf6ffce1d40f8401</a></p>
+<p>打开Etherscan，你应该可以看到该交易的输入数据就是Solidity编译器产生的字节码：<br><img src="/asset/evmp5_bytecode.jpeg" alt=""></p>
+<p>当处理该交易的时候，EVM会将输入数据作为代码执行。瞧，一个合约就被创建了。</p>
+<h2 id="字节码是干什么的？"><a href="#字节码是干什么的？" class="headerlink" title="字节码是干什么的？"></a>字节码是干什么的？</h2><p>我们可以将上面的字节码分成3个独立的块：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">//部署代码</span><br><span class="line">60606040523415600e57600080fd5b5b603680601c6000396000f300</span><br><span class="line">//合约代码</span><br><span class="line">60606040525b600080fd00</span><br><span class="line">// Auxdata</span><br><span class="line">a165627a7a723058209747525da0f525f1132dde30c8276ec70c4786d4b08a798eda3c8314bf796cc30029</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>创建合约时运行部署代码</li>
+<li>合约创建成功之后当它的方法被调用时，运行合约代码</li>
+<li>（可选）Auxdata是源码的加密指纹，用来验证。这只是数据，永远不会被EVM执行</li>
+</ul>
+<p>部署代码有两个主要作用：</p>
+<ol>
+<li>运行构造器函数，并设置初始化内存变量（就像合约的拥有者）</li>
+<li>计算合约代码，并返回给EVM</li>
+</ol>
+<p>Solidity编译器产生的部署代码会从字节码中加载<code>60606040525b600080fd00</code>到内存中，然后将它作为合约代码返回。在这个例子中，“计算”只是读取一块数据到内存中。原则上，我们可以编程地产生合约代码。</p>
+<p>构造器到底做什么取决于语言，但是EVM语言最后会返回合约代码。</p>
+<h2 id="合约创建"><a href="#合约创建" class="headerlink" title="合约创建"></a>合约创建</h2><p>那么当部署代码运行完并返回合约代码之后会发生什么？以太坊是如何从返回的合约代码中创建一个合约的？</p>
+<p>让我们一起深入的去了解一下源码，看看细节。</p>
+<p>我发现了Go-Ethereum 的实现方式是找到需要信息的最简单参考。我们得到了正确的变量名、静态类型信息和符号交叉引用。尝试超越这个，黄皮书！</p>
+<p>使用Sourcegraph（当鼠标停留在一个变量上的时候会有类型信息，非常好用）软件阅读的源码，找到的相关方法是<a href="https://sourcegraph.com/github.com/ethereum/go-ethereum@e9295163aa25479e817efee4aac23eaeb7554bba/-/blob/core/vm/evm.go#L301">evm.Create</a>。让我们略读一下代码，忽略一些错误检查和过于详细的细节。从上到下：</p>
+<ul>
+<li><p>检测调用者是否拥有足够的余额来做转账</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if !evm.CanTransfer(evm.StateDB, caller.Address(), value) &#123;</span><br><span class="line"> return nil, common.Address&#123;&#125;, gas, ErrInsufficientBalance</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>从调用者的地址派生一个新合约的地址（通过创建者账户的 <code>nonce</code>传递）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">contractAddr = crypto.CreateAddress(caller.Address(), nonce)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用派生的合约地址来创建新合约账户（改变”世界状态“<code>StateDB</code> ）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">evm.StateDB.CreateAccount(contractAddr)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将初始的Ether基金从调用者转到新合约中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">evm.Transfer(evm.StateDB, caller.Address(), contractAddr, value)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置输入数据为合约的部署代码，然后使用EVM来执行。<code>ret</code>变量是返回的合约代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">contract := NewContract(caller, AccountRef(contractAddr), value, gas)</span><br><span class="line">contract.SetCallCode(&amp;contractAddr, crypto.Keccak256Hash(code), code)</span><br><span class="line">ret, err = run(evm, snapshot, contract, nil)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>检查错误。或如果合约代码太长则会失败。收取用户的gas然后设置合约代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">if err == nil &amp;&amp; !maxCodeSizeExceeded &#123;</span><br><span class="line">  createDataGas := uint64(len(ret)) * params.CreateDataGas</span><br><span class="line">  if contract.UseGas(createDataGas) &#123;</span><br><span class="line">    evm.StateDB.SetCode(contractAddr, ret)</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    err = ErrCodeStoreOutOfGas</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="部署代码的代码"><a href="#部署代码的代码" class="headerlink" title="部署代码的代码"></a>部署代码的代码</h2><p>让我们来看看汇编代码的细节，看看当一个合约被创建的时候”部署代码“是如何返回”合约代码“的。我们将会再一次分析合约列子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>将该合约的字节码分成独立的块：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 部署代码</span><br><span class="line">60606040523415600e57600080fd5b5b603680601c6000396000f300</span><br><span class="line">//合约代码</span><br><span class="line">60606040525b600080fd00</span><br><span class="line">// Auxdata</span><br><span class="line">a165627a7a723058209747525da0f525f1132dde30c8276ec70c4786d4b08a798eda3c8314bf796cc30029</span><br></pre></td></tr></table></figure></p>
+<p>部署代码的汇编代码是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// 为Solidity内部保留0x60个字节的内存</span><br><span class="line">mstore(0x40, 0x60)</span><br><span class="line">// 非支付合约。如果调用者发送ether就会归还</span><br><span class="line">jumpi(tag_1, iszero(callvalue))</span><br><span class="line">0x0</span><br><span class="line">dup1</span><br><span class="line">revert</span><br><span class="line">// 将合约代码拷贝到内存中并返回</span><br><span class="line">tag_1:</span><br><span class="line">tag_2:</span><br><span class="line">  dataSize(sub_0)</span><br><span class="line">  dup1</span><br><span class="line">  dataOffset(sub_0)</span><br><span class="line">  0x0</span><br><span class="line">  codecopy</span><br><span class="line">  0x0</span><br><span class="line">  return</span><br><span class="line">stop</span><br></pre></td></tr></table></figure></p>
+<p>为返回合约代码跟踪上面的汇编代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">// 60 36 (PUSH 0x36)</span><br><span class="line">dataSize(sub_0)</span><br><span class="line">  stack: [0x36]</span><br><span class="line">dup1</span><br><span class="line">  stack: [0x36 0x36]</span><br><span class="line">// 60 1c == (PUSH 0x1c)</span><br><span class="line">dataOffset(sub_0)</span><br><span class="line">  stack: [0x1c 0x36 0x36]</span><br><span class="line">0x0</span><br><span class="line">  stack: [0x0 0x1c 0x36 0x36]</span><br><span class="line">codecopy</span><br><span class="line">  // 消耗三个参数</span><br><span class="line">  // 将数据的 `length` 从`codeOffset` 拷贝到`memoryOffset`</span><br><span class="line">  // memoryOffset = 0x0</span><br><span class="line">  // codeOffset   = 0x1c</span><br><span class="line">  // length       = 0x36</span><br><span class="line">  stack: [0x36]</span><br><span class="line">0x0</span><br><span class="line">  stack: [0x0 0x36]</span><br><span class="line">  memory: [</span><br><span class="line">    0x0:0x36 =&gt; calldata[0x1c:0x36]</span><br><span class="line">  ]</span><br><span class="line">return</span><br><span class="line">  // 消耗两个参数</span><br><span class="line">  // 返回 `memoryOffset`中的数据`length` </span><br><span class="line">  // memoryOffset  = 0x0</span><br><span class="line">  // length        = 0x36</span><br><span class="line">  stack: []</span><br><span class="line">  memory: [</span><br><span class="line">    0x0:0x36 =&gt; calldata[0x1c:0x36]</span><br><span class="line">  ]</span><br></pre></td></tr></table></figure></p>
+<p><code>dataSize(sub_0)</code>和<code>dataOffset(sub_0)</code>实际上不是真正的指令。它们实际上是PUSH指令，将常量压入栈中。两个<code>0x1C</code>(28) 和<code>0x36</code> (54) 常量指定一个字节码子字符串作为代码合约返回。</p>
+<p>部署代码的汇编代码大致对应于下面的Python3 代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">memory = []</span><br><span class="line">calldata = bytes.fromhex(&quot;60606040523415600e57600080fd5b5b603680601c6000396000f30060606040525b600080fd00a165627a7a72305820b5090d937cf89f134d30e54dba87af4247461dd3390acf19d4010d61bfdd983a0029&quot;)</span><br><span class="line">size = 0x36   // dataSize(sub_0)</span><br><span class="line">offset = 0x1c // dataOffset(sub_0)</span><br><span class="line">// 将调用数据的子字符串拷贝到内存</span><br><span class="line">memory[0:size] = calldata[offset:offset+size]</span><br><span class="line">// 将内存的内容用十六进制打印出来而不返回</span><br><span class="line">print(bytes(memory[0:size]).hex())</span><br></pre></td></tr></table></figure></p>
+<p>产生的内存内容是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">60606040525b600080fd00</span><br><span class="line">a165627a7a72305820b5090d937cf89f134d30e54dba87af4247461dd3390acf19d4010d61bfdd983a0029</span><br></pre></td></tr></table></figure></p>
+<p>对应的汇编代码（加上auxdata）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 6060604052600080fd00</span><br><span class="line">mstore(0x40, 0x60)</span><br><span class="line">tag_1:</span><br><span class="line">  0x0</span><br><span class="line">  dup1</span><br><span class="line">  revert</span><br><span class="line">auxdata: 0xa165627a7a723058209747525da0f525f1132dde30c8276ec70c4786d4b08a798eda3c8314bf796cc30029</span><br></pre></td></tr></table></figure></p>
+<p>再次看下Etherscan，这正是部署的合约代码：<br><a href="https://rinkeby.etherscan.io/address/0x2c7f561f1fc5c414c48d01e480fdaae2840b8aa2#code">以太坊账户0x2c7f561F1fc5c414C48d01E480fDAAE2840B8AA2 信息<br>以太坊区块链探险者，API和分析平台<br>rinkeby.etherscan.io </a><br><img src="/asset/evmp5_address.jpeg" alt=""></p>
+<h2 id="CODECOPY"><a href="#CODECOPY" class="headerlink" title="CODECOPY"></a>CODECOPY</h2><p>部署代码使用<code>codecopy</code>将交易的输入数据拷贝到内存。</p>
+<p><code>codecopy</code>指令的行为和参数比其他的简单指令要复杂一点。如果我在黄皮书中查找这个指令，可能会更加的困惑一些。相反，让我们看看go-ethereum 源代码来研究一下到底怎么回事。</p>
+<p>看看<a href="https://sourcegraph.com/github.com/ethereum/go-ethereum@e9295163aa25479e817efee4aac23eaeb7554bba/-/blob/core/vm/instructions.go#L408:6">CODECOPY</a>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">func opCodeCopy(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) &#123;</span><br><span class="line"> var (</span><br><span class="line">  memOffset  = stack.pop()</span><br><span class="line">  codeOffset = stack.pop()</span><br><span class="line">  length     = stack.pop()</span><br><span class="line"> )</span><br><span class="line"> codeCopy := getDataBig(contract.Code, codeOffset, length)</span><br><span class="line"> memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy)</span><br><span class="line">evm.interpreter.intPool.put(memOffset, codeOffset, length)</span><br><span class="line"> return nil, nil</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>没有难懂的字母！</p>
+<blockquote>
+<p><code>evm.interpreter.intPool.put(memOffset, codeOffset, length)</code>这一行回收对象（大整数）后面使用。这只是一个高效的优化。</p>
+</blockquote>
+<h2 id="构造器参数"><a href="#构造器参数" class="headerlink" title="构造器参数"></a>构造器参数</h2><p>除了产生合约代码，部署代码的其他作用是运行构造器来进行设置。如果存在构造器参数，那么部署代码就需要从某地放加载参数。</p>
+<p>Solidity传递构造器参数的惯例是在调用<code>eth_sendtransaction</code>时在字节码末尾附加ABI编码的参数值。RPC调用将字节码和ABI编码参数放到一起作为输入数据进行传递，就像：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;from&quot;: &quot;0xbd04d16f09506e80d1fd1fd8d0c79afa49bd9976&quot;</span><br><span class="line">  &quot;data&quot;: hexencode(compiledByteCode + encodedParams),</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>看看有一个构造器参数的合约例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract C &#123;</span><br><span class="line">  uint256 a;</span><br><span class="line">  function C(uint256 _a) &#123;</span><br><span class="line">    a = _a;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>我已经创建了这个合约，传递了<code>66</code>值。Etherscan上的交易：<br><a href="https://rinkeby.etherscan.io/tx/0x2f409d2e186883bd3319a8291a345ddbc1c0090f0d2e182a32c9e54b5e3fdbd8">https://rinkeby.etherscan.io/tx/0x2f409d2e186883bd3319a8291a345ddbc1c0090f0d2e182a32c9e54b5e3fdbd8</a></p>
+<p>输入数据是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x60606040523415600e57600080fd5b6040516020806073833981016040528080519060200190919050508060008190555050603580603e6000396000f3006060604052600080fd00a165627a7a7230582062a4d50871818ee0922255f5848ba4c7e4edc9b13c555984b91e7447d3bb0e7400290000000000000000000000000000000000000000000000000000000000000042</span><br></pre></td></tr></table></figure></p>
+<p>我们可以在最后面看到构造器的参数，也就是<code>66</code>，但是作为ABI编码的32位字节就是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0000000000000000000000000000000000000000000000000000000000000042</span><br></pre></td></tr></table></figure></p>
+<p>为了处理构造器里面的参数，部署代码从<code>calldata</code>中的结尾拷贝ABI参数到内存中，然后从内存中拷贝到栈中。</p>
+<h2 id="创建合约的合约"><a href="#创建合约的合约" class="headerlink" title="创建合约的合约"></a>创建合约的合约</h2><p><code>FooFactory</code>合约可以通过调用<code>makeNewFoo</code>来创建一个新的<code>Foo</code>实例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.4.11;</span><br><span class="line">contract Foo &#123;</span><br><span class="line">&#125;</span><br><span class="line">contract FooFactory &#123;</span><br><span class="line">  address fooInstance;</span><br><span class="line">  function makeNewFoo() &#123;</span><br><span class="line">    fooInstance = new Foo();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个合约完整的汇编代码在<a href="https://gist.github.com/hayeah/a94aa4e87b7b42e9003adf64806c84e4">Gist</a>里。编译器输出的结构更加的复杂，因为这里有两套”安装时间“和”运行时间“的字节码。就像这样组织的：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FooFactoryDeployCode</span><br><span class="line">FooFactoryContractCode</span><br><span class="line">  FooDeployCode</span><br><span class="line">  FooContractCode</span><br><span class="line">  FooAUXData</span><br><span class="line">FooFactoryAUXData</span><br></pre></td></tr></table></figure></p>
+<p><code>FooFactoryContractCode</code>本质就是为<code>tag_8</code>中<code>Foo</code>拷贝字节码然后跳转回<code>tag_7</code>去执行<code>create</code>指令。</p>
+<p><code>create</code>指令就像<code>eth_sendtransaction</code>RPC调用。它提供了一个在EVM里面创建新合约的方法。</p>
+<p>看一下go-ethereum 源代码里面的<a href="https://sourcegraph.com/github.com/ethereum/go-ethereum@e9295163aa25479e817efee4aac23eaeb7554bba/-/blob/core/vm/instructions.go#L572:6">opCreate</a> 。这个指令调用<code>evm.Create</code>来创建合约：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res, addr, returnGas, suberr := evm.Create(contract, input, gas, value)</span><br></pre></td></tr></table></figure></p>
+<p>我们在前面就已经看见了<code>evm.Create</code>，但是这次的调用者是一个智能合约而不是人类。</p>
+<h2 id="AUXDATA"><a href="#AUXDATA" class="headerlink" title="AUXDATA"></a>AUXDATA</h2><p>如果你想要完全的理解auxdata是什么，那么可以阅读 <a href="https://github.com/ethereum/solidity/blob/8fbfd62d15ae83a757301db35621e95bccace97b/docs/metadata.rst#encoding-of-the-metadata-hash-in-the-bytecode">合约元数据</a>。它的要点就是<code>auxdata</code>是一个哈希值，你可以使用它来抓取部署合约的元数据。</p>
+<p>auxdata的格式就是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0xa1 0x65 &apos;b&apos; &apos;z&apos; &apos;z&apos; &apos;r&apos; &apos;0&apos; 0x58 0x20 &lt;32 bytes swarm hash&gt; 0x00 0x29`</span><br></pre></td></tr></table></figure></p>
+<p>解构我们之前看到过的auxdata字节序列：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">a1 65</span><br><span class="line">// b z z r 0 (ASCII)</span><br><span class="line">62 7a 7a 72 30</span><br><span class="line">58 20</span><br><span class="line">// 32 bytes hash</span><br><span class="line">62a4d50871818ee0922255f5848ba4c7e4edc9b13c555984b91e7447d3bb0e74</span><br><span class="line">00 29</span><br></pre></td></tr></table></figure></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>合约创建的方式和自我解压软件安装程序的工作方式比较类似。当安装程序运行时，它会配置系统环境，然后会从程序包中读取目标程序放入到系统中。</p>
+<ul>
+<li>在”安装时间“和”运行时间“之间有一个强制的分离。无法运行构造器两次</li>
+<li>智能合约可以使用相同的处理来创建其他的智能合约</li>
+<li>使用非Solidity语言实现会容易一点</li>
+</ul>
+<p>首先，我对”智能合约安装程序“的不同部分被打包到一起作为字节字符串<code>data</code>放在交易里感到很困惑：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;data&quot;: constructorCode + contractCode + auxdata + constructorData</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>data</code>是如何被编码的，阅读文档中的<code>eth_sendtransaction</code>无法获得明显的答案。我一直都没弄明白构造器的参数是如何传递给交易的，直到有一个朋友告诉我它们被ABI进行编码之后附加到字节码的后面，才明白是怎么回事。</p>
+<p>另一个可以使它看起来更加清晰一点的替代设计也许就是将这些作为交易独立的属性进行发送：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  // For &quot;install time&quot; bytecode</span><br><span class="line">  &quot;constructorCode&quot;: ...,</span><br><span class="line">  // For &quot;run time&quot; bytecode</span><br><span class="line">  &quot;constructorBody&quot;: ...,</span><br><span class="line">  // For encoding arguments</span><br><span class="line">  &quot;data&quot;: ...,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>不过进行更多的思考，我认为交易对象简单化实际上是非常强大的。对于一个交易，<code>data</code>只是一个字节字符串，而且它不涉及数据是如何被解释的语言模型。通过让交易对象简单化，语言的实现者就有一个空白的画布进行设计和实验。</p>
+<p>确实，<code>data</code>在未来甚至可以被一个不同的虚拟机进行解释。</p>
+<p>翻译作者: <a href="https://lilymoana.github.io/">许莉</a><br>原文地址：<a href="https://medium.com/@hayeah/diving-into-the-ethereum-vm-part-5-the-smart-contract-creation-process-cb7b6133b855">Diving Into The Ethereum VM Part Five</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/evm_part5.html">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 XU LI 的个人博客">XU LI</a></p>
+        <p><span>发布时间:</span>2017年10月30日 - 15时07分</p>
+        <p><span>最后更新:</span>2017年11月22日 - 13时25分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/evm_part5.html" title="深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么">https://lilymoana.github.io/evm_part5.html</a>
+            <span class="copy-path" data-clipboard-text="原文: https://lilymoana.github.io/evm_part5.html　　作者: XU LI" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/evm_part4.html" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式
+        
+      </div>
+    </a>
+  
+  
+    <a  href="/ethereum_theory.html" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">以太坊的工作原理</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#合约出生证明"><span class="toc-number">1.</span> <span class="toc-text">合约出生证明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#字节码是干什么的？"><span class="toc-number">2.</span> <span class="toc-text">字节码是干什么的？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#合约创建"><span class="toc-number">3.</span> <span class="toc-text">合约创建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#部署代码的代码"><span class="toc-number">4.</span> <span class="toc-text">部署代码的代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CODECOPY"><span class="toc-number">5.</span> <span class="toc-text">CODECOPY</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构造器参数"><span class="toc-number">6.</span> <span class="toc-text">构造器参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#创建合约的合约"><span class="toc-number">7.</span> <span class="toc-text">创建合约的合约</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AUXDATA"><span class="toc-number">8.</span> <span class="toc-text">AUXDATA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">9.</span> <span class="toc-text">总结</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="hide it"  title="click the button to show or hide catalogs of this article">
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "hide it";
+    var valueShow = "show it";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/evm_part4.html" title="上一篇: 深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/ethereum_theory.html" title="下一篇: 以太坊的工作原理">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/ConsensusCompare.html">共识算法的比较：Casper vs Tendermint</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part1.html">深入了解以太坊虚拟机</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part2.html">深入了解以太坊虚拟机第2部分——固定长度数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part3.html">深入了解以太坊虚拟机第3部分——动态数据类型的表示方法</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part4.html">深入了解以太坊虚拟机第4部分——ABI编码外部方法调用的方式</a></li><li class="post-list-item"><a class="post-list-link" href="/evm_part5.html">深入了解以太坊虚拟机第5部分——一个新合约被创建后会发生什么</a></li><li class="post-list-item"><a class="post-list-link" href="/ethereum_theory.html">以太坊的工作原理</a></li><li class="post-list-item"><a class="post-list-link" href="/SPV.html">简易支付验证能支持数十亿的比特币用户吗？</a></li><li class="post-list-item"><a class="post-list-link" href="/Eng_C-ABCI.html">C Language Implemented Tendermint ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/Chi_C-ABCI.html">C语言实现的ABCI</a></li><li class="post-list-item"><a class="post-list-link" href="/DPOS.html">DPOS共识算法—缺失的白皮书</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2017 XU LI
+            </div>
+            <div class="footer-right">
+                <a href="https://hexo.io/" target="_blank">Hexo</a><a href="https://github.com/lilymoana" target="_blank">Blog</a> by XuLi
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 4;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>
